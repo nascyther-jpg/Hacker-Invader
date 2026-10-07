@@ -86,7 +86,8 @@ function Reveal({
             label="Escanear bloco"
             icon="qrcode-scan"
             disabled={!done}
-            onPress={() => router.push('/scan')}
+            // replace: a pista sai da pilha e o voltar depois do scan cai na base
+            onPress={() => router.replace('/scan')}
           />
         ) : (
           <Button label="Voltar à base" variant="secondary" onPress={() => router.replace('/home')} />
