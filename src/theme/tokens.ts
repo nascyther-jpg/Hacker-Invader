@@ -1,36 +1,40 @@
-// BLACK NODE design tokens. Única fonte de cores, espaçamentos, raios e sombras.
+// BLACK NODE design tokens · estilo Cyberpunk 2077.
+// Única fonte de cores, espaçamentos, cortes e sombras.
 // Telas e componentes nunca usam hex direto: sempre importam daqui.
 
 export const color = {
-  bg: '#070A0D',
-  surface: '#0D1217',
-  surfaceRaised: '#131A21',
-  line: '#1C2630',
-  lineStrong: '#2B3843',
+  bg: '#07080B',
+  surface: '#111319',
+  surfaceRaised: '#191C24',
+  line: '#272B35',
+  lineStrong: '#3B414E',
 
-  primary: '#39FF88',
-  primaryDim: 'rgba(57, 255, 136, 0.14)',
-  primaryLine: 'rgba(57, 255, 136, 0.45)',
-  onPrimary: '#04140A',
+  // Amarelo neon: marca, ação principal e sucesso.
+  primary: '#FCEE0A',
+  primaryDim: 'rgba(252, 238, 10, 0.12)',
+  primaryLine: 'rgba(252, 238, 10, 0.5)',
+  onPrimary: '#0A0A0A',
 
-  cyan: '#00C8FF',
-  cyanDim: 'rgba(0, 200, 255, 0.14)',
+  // Ciano: sistema, novidade, próximo alvo.
+  cyan: '#00F0FF',
+  cyanDim: 'rgba(0, 240, 255, 0.12)',
 
-  warning: '#FFD166',
-  warningDim: 'rgba(255, 209, 102, 0.14)',
+  // Vermelho: erro e alerta. Contraste 5,6:1 sobre o fundo.
+  danger: '#FF3355',
+  dangerDim: 'rgba(255, 51, 85, 0.14)',
 
-  text: '#E8FFF1',
-  muted: '#71808C',
+  text: '#EDF4F5',
+  muted: '#8590A0',
 
-  scrim: 'rgba(7, 10, 13, 0.72)',
+  scrim: 'rgba(7, 8, 11, 0.78)',
 } as const;
 
-export type Tone = 'primary' | 'cyan' | 'warning' | 'muted';
+export type Tone = 'primary' | 'cyan' | 'danger' | 'muted';
 
 export const toneColor: Record<Tone, { fg: string; bg: string }> = {
   primary: { fg: color.primary, bg: color.primaryDim },
   cyan: { fg: color.cyan, bg: color.cyanDim },
-  warning: { fg: color.warning, bg: color.warningDim },
+  danger: { fg: color.danger, bg: color.dangerDim },
   muted: { fg: color.muted, bg: color.surfaceRaised },
 };
 
@@ -46,11 +50,11 @@ export const space = {
   screen: 20,
 } as const;
 
-// Uma escala de raio por papel: tags/sm, botões e painéis/md, nós/círculos/full.
-export const radius = {
-  sm: 4,
-  md: 10,
-  full: 999,
+// Sem cantos arredondados: as formas usam cantos chanfrados (ver Chamfer).
+export const cut = {
+  sm: 6,
+  md: 14,
+  lg: 22,
 } as const;
 
 // Alvos de toque para 7 a 12 anos: nunca abaixo de 56.
@@ -60,17 +64,11 @@ export const touch = {
   icon: 56,
 } as const;
 
-// boxShadow funciona em iOS, Android e web na New Architecture.
 // Glow é reservado a UM elemento por tela (o elemento de assinatura).
 export const glow = {
-  primary: '0px 0px 24px 0px rgba(57, 255, 136, 0.35)',
-  primaryStrong: '0px 0px 48px 4px rgba(57, 255, 136, 0.45)',
-  cyan: '0px 0px 24px 0px rgba(0, 200, 255, 0.35)',
-  warning: '0px 0px 24px 0px rgba(255, 209, 102, 0.3)',
-} as const;
-
-export const elevation = {
-  raised: '0px 8px 24px 0px rgba(0, 0, 0, 0.5)',
+  primary: 'rgba(252, 238, 10, 0.35)',
+  cyan: 'rgba(0, 240, 255, 0.35)',
+  danger: 'rgba(255, 51, 85, 0.4)',
 } as const;
 
 // Durações curtas e funcionais. Springs para feedback de toque.
@@ -78,6 +76,7 @@ export const motion = {
   fast: 160,
   base: 260,
   slow: 420,
+  glitch: 380,
   press: { damping: 18, stiffness: 420, mass: 0.6 },
   pop: { damping: 11, stiffness: 180, mass: 0.8 },
 } as const;

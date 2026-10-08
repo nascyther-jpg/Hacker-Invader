@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, space, touch } from '../theme/tokens';
+import { Chamfer } from './Chamfer';
 import { Icon, type IconName } from './Icon';
 import { PressableScale } from './PressableScale';
 import { Txt } from './Txt';
@@ -74,9 +75,11 @@ function HeaderButton({ action }: { action?: HeaderAction }) {
       accessibilityRole="button"
       accessibilityLabel={action.label}
       hitSlop={8}
-      style={[styles.headerSlot, styles.headerButton]}
+      style={styles.headerSlot}
     >
-      <Icon name={action.icon} tone={color.text} />
+      <Chamfer cut="sm" fill={color.surface} stroke={color.line} style={styles.headerButton}>
+        <Icon name={action.icon} tone={color.text} />
+      </Chamfer>
     </PressableScale>
   );
 }
@@ -92,14 +95,7 @@ const styles = StyleSheet.create({
   },
   title: { flex: 1, textAlign: 'center' },
   headerSlot: { width: touch.icon, height: touch.icon },
-  headerButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: color.line,
-    backgroundColor: color.surface,
-  },
+  headerButton: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: { flex: 1, paddingHorizontal: space.screen, gap: space.xl },
   centered: { justifyContent: 'center' },
   scroll: { flexGrow: 1, paddingTop: space.md },

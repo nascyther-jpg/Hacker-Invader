@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { Brackets } from '../components/Brackets';
+import { GlitchText } from '../components/GlitchText';
 import { Icon } from '../components/Icon';
 import { Screen } from '../components/Screen';
 import { Txt } from '../components/Txt';
-import { color, glow, space } from '../theme/tokens';
+import { color, space } from '../theme/tokens';
 
 // Boot: três linhas de sistema e entra na base. Toque pula.
 const LINES = ['Conectando ao nó secreto', 'Canal protegido', 'Agente identificado'];
@@ -37,9 +38,9 @@ export default function Boot() {
           <Brackets style={styles.mark} tone={color.primary} size={18}>
             <Icon name="cube-outline" size="xl" tone={color.primary} />
           </Brackets>
-          <Txt variant="display" center style={styles.word}>
+          <GlitchText center tone={color.primary} trigger={step >= LINES.length}>
             BLACK NODE
-          </Txt>
+          </GlitchText>
           <Txt variant="label" tone={color.muted} center>
             Missão: carteira secreta
           </Txt>
@@ -71,10 +72,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: space.lg,
-    borderRadius: 60,
-    boxShadow: glow.primary,
   },
-  word: { letterSpacing: 6 },
   log: { minHeight: 90, gap: space.sm, alignSelf: 'center', marginTop: space.xxl },
   line: { flexDirection: 'row', gap: space.md },
 });

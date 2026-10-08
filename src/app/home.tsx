@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { BtcAmount } from '../components/BtcAmount';
-import { Brackets } from '../components/Brackets';
+import { Chamfer } from '../components/Chamfer';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { NodeTrack } from '../components/NodeTrack';
@@ -11,7 +11,7 @@ import { StatusTag } from '../components/StatusTag';
 import { Txt } from '../components/Txt';
 import { MISSION, clueText, pad2 } from '../game/config';
 import { useMission } from '../game/store';
-import { color, glow, radius, space, touch } from '../theme/tokens';
+import { color, glow, space, touch } from '../theme/tokens';
 
 export default function Home() {
   const { btc, complete, decrypted, reset } = useMission();
@@ -45,7 +45,7 @@ export default function Home() {
       }
     >
       <Pressable onLongPress={askReset} delayLongPress={2000} accessible={false}>
-        <Brackets style={styles.hero} tone={complete ? color.primary : color.lineStrong}>
+        <Chamfer cut="lg" fill={color.surface} stroke={complete ? color.primary : color.lineStrong} style={styles.hero}>
           <StatusTag
             label={complete ? 'Carteira desbloqueada' : 'Carteira bloqueada'}
             icon={complete ? 'lock-open-variant-outline' : 'lock-outline'}
@@ -57,9 +57,11 @@ export default function Home() {
               ? 'Você recuperou todos os blocos.'
               : missing === MISSION.totalNodes
                 ? `Encontre ${MISSION.totalNodes} blocos escondidos no resort para abrir a carteira.`
-                : `Faltam ${missing} ${missing === 1 ? 'bloco' : 'blocos'} para abrir a carteira.`}
+                : missing === 1
+                  ? 'Falta 1 bloco para abrir a carteira.'
+                  : `Faltam ${missing} blocos para abrir a carteira.`}
           </Txt>
-        </Brackets>
+        </Chamfer>
       </Pressable>
 
       <View style={styles.section}>
@@ -78,22 +80,30 @@ export default function Home() {
         <PressableScale
           onPress={() => router.push({ pathname: '/clue/[id]', params: { id: String(clueId) } })}
           accessibilityRole="button"
-          accessibilityLabel={clueOpen ? `Pista do bloco ${pad2(clueId + 1)}: ${clueText(clueId)}` : 'Decifrar a pista atual'}
-          style={[styles.clue, !clueOpen && styles.clueLocked]}
+          accessibilityLabel={
+            clueOpen ? `Pista do bloco ${pad2(clueId + 1)}: ${clueText(clueId)}` : 'Decifrar a pista atual'
+          }
         >
-          <View style={styles.clueHead}>
-            <Txt variant="label" tone={clueOpen ? color.muted : color.cyan}>
-              Pista do bloco {pad2(clueId + 1)}
-            </Txt>
-            <Icon name={clueOpen ? 'arrow-right' : 'lock-outline'} tone={clueOpen ? color.muted : color.cyan} />
-          </View>
-          {clueOpen ? (
-            <Txt variant="bodyBold" numberOfLines={2}>
-              {clueText(clueId)}
-            </Txt>
-          ) : (
-            <Txt variant="title">Nova pista cifrada. Toque para decifrar.</Txt>
-          )}
+          <Chamfer
+            fill={clueOpen ? color.surface : color.cyanDim}
+            stroke={clueOpen ? color.line : color.cyan}
+            glow={clueOpen ? undefined : glow.cyan}
+            style={styles.clue}
+          >
+            <View style={styles.clueHead}>
+              <Txt variant="label" tone={clueOpen ? color.muted : color.cyan}>
+                Pista do bloco {pad2(clueId + 1)}
+              </Txt>
+              <Icon name={clueOpen ? 'arrow-right' : 'lock-outline'} tone={clueOpen ? color.muted : color.cyan} />
+            </View>
+            {clueOpen ? (
+              <Txt variant="bodyBold" numberOfLines={2}>
+                {clueText(clueId)}
+              </Txt>
+            ) : (
+              <Txt variant="title">Nova pista cifrada. Toque para decifrar.</Txt>
+            )}
+          </Chamfer>
         </PressableScale>
       ) : null}
     </Screen>
@@ -108,15 +118,6 @@ const styles = StyleSheet.create({
   },
   section: { gap: space.lg },
   sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  clue: {
-    minHeight: touch.button,
-    padding: space.xl,
-    gap: space.md,
-    borderRadius: radius.md,
-    backgroundColor: color.surface,
-    borderWidth: 1,
-    borderColor: color.line,
-  },
-  clueLocked: { borderColor: color.cyan, boxShadow: glow.cyan },
+  clue: { minHeight: touch.button, padding: space.xl, gap: space.md },
   clueHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 });
