@@ -19,10 +19,11 @@ Stack único (Expo Router), sem tab bar: o app tem um destino central (a carteir
 
 ```
 src/app/
-  index        Boot (2,3 s, toque pula) -> replace /home
+  index        Boot (2,3 s, toque pula) -> replace /setup (sem missão) ou /home
+  setup        Configuração do recreador: modo, time, número de pistas
   home         Carteira + progresso + pista atual
   scan         Scanner (fullScreenModal) -> replace /verify
-  verify       Verificação: válido / inválido / protegido / repetido
+  verify       Verificação: válido / inválido / protegido / repetido / outro time
   clue/[id]    Pista (0 = abertura, N = liberada pelo bloco N)
   history      Cadeia de blocos
   complete     Missão completa
@@ -52,7 +53,7 @@ src/app/
 
 ## Componentes (`src/components`)
 
-`Screen`, `Txt`, `Icon` (só MaterialCommunityIcons), `Button` (primary / secondary / ghost), `PressableScale`, `Chamfer`, `GlitchText`, `Brackets`, `StatusTag` (sempre ícone + texto), `NodeTrack` (progresso 0/4 a 4/4), `BtcAmount`, `Signal` (ícone de resultado com entrada pop/shake), `useDecrypt`.
+`Screen`, `Txt`, `Icon` (só MaterialCommunityIcons), `Button` (primary / secondary / ghost), `PressableScale`, `Chamfer`, `GlitchText`, `Brackets`, `StatusTag` (sempre ícone + texto), `NodeTrack` (progresso 0/N a N/N; acima de 6 nós eles encolhem para caber), `Choice` (opção de rádio), `MissionClock` (time + cronômetro do Hacker vs Hacker), `BtcAmount`, `Signal` (ícone de resultado com entrada pop/shake), `useDecrypt`.
 
 ## Movimento
 
@@ -69,5 +70,7 @@ Com "reduzir movimento" ligado, tudo vira instantâneo.
 
 - Blocos seguem a ordem das pistas. QR válido fora de ordem mostra "Bloco protegido".
 - QR repetido mostra "Bloco já recuperado" e leva à pista.
-- Recreador zera a missão segurando a carteira na Home por 2 s.
-- Conteúdo (códigos e charadas) fica em `src/game/config.ts`.
+- Recreador zera a missão segurando a carteira na Home por 2 s e volta à configuração.
+- Conteúdo (códigos, lugares e charadas) fica em `src/game/config.ts`.
+- Número de pistas: 1 a 10 (padrão 4). O bloco N fica no lugar N; a pista N leva ao lugar N+1.
+- Hacker vs Hacker: Time Amarelo (QR `BLACKNODE-Axx`) e Time Ciano (`BLACKNODE-Bxx`), mesma rota. QR de outro conjunto mostra "Bloco de outro time". Cronômetro do início até o último bloco; o recreador compara os tempos dos dois celulares.

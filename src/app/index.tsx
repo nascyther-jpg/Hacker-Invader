@@ -7,6 +7,7 @@ import { GlitchText } from '../components/GlitchText';
 import { Icon } from '../components/Icon';
 import { Screen } from '../components/Screen';
 import { Txt } from '../components/Txt';
+import { useMission } from '../game/store';
 import { color, space } from '../theme/tokens';
 
 // Boot: três linhas de sistema e entra na base. Toque pula.
@@ -16,10 +17,13 @@ const STEP = 520;
 export default function Boot() {
   const reduced = useReducedMotion();
   const [step, setStep] = useState(0);
+  const { started } = useMission();
+  // Sem missão em andamento: o recreador configura antes de entregar o celular.
+  const enter = () => router.replace(started ? '/home' : '/setup');
 
   useEffect(() => {
     if (step > LINES.length) {
-      router.replace('/home');
+      enter();
       return;
     }
     const t = setTimeout(() => setStep((s) => s + 1), step === 0 ? 400 : reduced ? 200 : STEP);
@@ -29,7 +33,7 @@ export default function Boot() {
   return (
     <Pressable
       style={styles.flex}
-      onPress={() => router.replace('/home')}
+      onPress={enter}
       accessibilityRole="button"
       accessibilityLabel="Entrar na missão"
     >

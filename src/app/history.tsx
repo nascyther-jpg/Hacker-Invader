@@ -6,12 +6,12 @@ import { PressableScale } from '../components/PressableScale';
 import { Screen } from '../components/Screen';
 import { StatusTag } from '../components/StatusTag';
 import { Txt } from '../components/Txt';
-import { MISSION, NODES, blockHash, pad2 } from '../game/config';
+import { blockHash, codeFor, pad2 } from '../game/config';
 import { useMission, type Block } from '../game/store';
 import { color, space, touch } from '../theme/tokens';
 
 // Histórico em forma de cadeia: cada bloco ligado ao anterior.
-// Lista fixa de 4 itens: ScrollView simples é suficiente.
+// No máximo 10 itens: ScrollView simples é suficiente.
 
 function time(at: number) {
   const d = new Date(at);
@@ -19,7 +19,8 @@ function time(at: number) {
 }
 
 export default function History() {
-  const { blocks, btc } = useMission();
+  const { blocks, btc, total, codeSet } = useMission();
+  const indexes = Array.from({ length: total }, (_, i) => i + 1);
   const back = () => (router.canGoBack() ? router.back() : router.replace('/home'));
 
   return (
@@ -27,20 +28,20 @@ export default function History() {
       <Txt variant="body" tone={color.muted}>
         {btc === 0
           ? 'Nenhum bloco recuperado ainda. Siga a primeira pista.'
-          : `${btc} de ${MISSION.totalNodes} blocos registrados na sua carteira.`}
+          : `${btc} de ${total} blocos registrados na sua carteira.`}
       </Txt>
 
       <View>
-        {NODES.map((node, i) => {
-          const block = blocks.find((b) => b.index === node.index);
+        {indexes.map((index) => {
+          const block = blocks.find((b) => b.index === index);
           return (
             <Row
-              key={node.index}
-              index={node.index}
-              hash={blockHash(node.code)}
+              key={index}
+              index={index}
+              hash={blockHash(codeFor(codeSet, index) ?? '')}
               block={block}
-              current={!block && node.index === btc + 1}
-              last={i === NODES.length - 1}
+              current={!block && index === btc + 1}
+              last={index === total}
             />
           );
         })}
@@ -64,7 +65,7 @@ function Row({
 }) {
   const done = Boolean(block);
   const open = () =>
-    index >= MISSION.totalNodes
+    last
       ? router.push('/complete')
       : router.push({ pathname: '/clue/[id]', params: { id: String(index) } });
 

@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { BtcAmount } from '../components/BtcAmount';
 import { Chamfer } from '../components/Chamfer';
@@ -9,22 +9,32 @@ import { PressableScale } from '../components/PressableScale';
 import { Screen } from '../components/Screen';
 import { StatusTag } from '../components/StatusTag';
 import { Txt } from '../components/Txt';
-import { MISSION, clueText, pad2 } from '../game/config';
+import { MissionClock } from '../components/MissionClock';
+import { clueText, pad2 } from '../game/config';
 import { useMission } from '../game/store';
 import { color, glow, space, touch } from '../theme/tokens';
 
 export default function Home() {
-  const { btc, complete, decrypted, reset } = useMission();
-  const missing = MISSION.totalNodes - btc;
+  const { btc, total, mode, started, complete, decrypted, reset } = useMission();
+  const missing = total - btc;
   const clueId = btc; // pista atual: 0 na abertura, N depois do bloco N
   const clueOpen = decrypted.includes(clueId);
 
-  // Recreador: segurar a carteira por 2s zera a missão para o próximo grupo.
+  // Recreador: segurar a carteira por 2s zera a missão e volta à configuração.
   const askReset = () =>
     Alert.alert('Reiniciar missão?', 'Todo o progresso deste aparelho será apagado.', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Reiniciar', style: 'destructive', onPress: reset },
+      {
+        text: 'Reiniciar',
+        style: 'destructive',
+        onPress: () => {
+          reset();
+          router.replace('/setup');
+        },
+      },
     ]);
+
+  if (!started) return <Redirect href="/setup" />;
 
   return (
     <Screen
@@ -44,6 +54,8 @@ export default function Home() {
         )
       }
     >
+      {mode === 'versus' ? <MissionClock /> : null}
+
       <Pressable onLongPress={askReset} delayLongPress={2000} accessible={false}>
         <Chamfer cut="lg" fill={color.surface} stroke={complete ? color.primary : color.lineStrong} style={styles.hero}>
           <StatusTag
@@ -55,8 +67,10 @@ export default function Home() {
           <Txt variant="body" tone={color.muted}>
             {complete
               ? 'Você recuperou todos os blocos.'
-              : missing === MISSION.totalNodes
-                ? `Encontre ${MISSION.totalNodes} blocos escondidos no resort para abrir a carteira.`
+              : missing === total
+                ? total === 1
+                  ? 'Encontre o bloco escondido no resort para abrir a carteira.'
+                  : `Encontre ${total} blocos escondidos no resort para abrir a carteira.`
                 : missing === 1
                   ? 'Falta 1 bloco para abrir a carteira.'
                   : `Faltam ${missing} blocos para abrir a carteira.`}
@@ -70,10 +84,10 @@ export default function Home() {
             Blocos
           </Txt>
           <Txt variant="code" tone={color.text}>
-            {btc}/{MISSION.totalNodes}
+            {btc}/{total}
           </Txt>
         </View>
-        <NodeTrack done={btc} size="lg" />
+        <NodeTrack done={btc} total={total} size="lg" />
       </View>
 
       {!complete ? (
@@ -81,7 +95,7 @@ export default function Home() {
           onPress={() => router.push({ pathname: '/clue/[id]', params: { id: String(clueId) } })}
           accessibilityRole="button"
           accessibilityLabel={
-            clueOpen ? `Pista do bloco ${pad2(clueId + 1)}: ${clueText(clueId)}` : 'Decifrar a pista atual'
+            clueOpen ? `Pista do bloco ${pad2(clueId + 1)}: ${clueText(clueId, total)}` : 'Decifrar a pista atual'
           }
         >
           <Chamfer
@@ -98,7 +112,7 @@ export default function Home() {
             </View>
             {clueOpen ? (
               <Txt variant="bodyBold" numberOfLines={2}>
-                {clueText(clueId)}
+                {clueText(clueId, total)}
               </Txt>
             ) : (
               <Txt variant="title">Nova pista cifrada. Toque para decifrar.</Txt>
