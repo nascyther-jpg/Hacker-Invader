@@ -10,15 +10,18 @@ import { Screen } from '../components/Screen';
 import { StatusTag } from '../components/StatusTag';
 import { Txt } from '../components/Txt';
 import { MissionClock } from '../components/MissionClock';
-import { clueText, pad2 } from '../game/config';
+import { clueText, millions, pad2 } from '../game/config';
 import { useMission } from '../game/store';
 import { color, glow, space, touch } from '../theme/tokens';
 
 export default function Home() {
-  const { btc, total, mode, route, started, complete, decrypted, reset } = useMission();
+  const { btc, total, mode, route, started, complete, decrypted, reset, story, unmasked } = useMission();
   const missing = total - btc;
-  const clueId = btc; // pista atual: 0 na abertura, N depois do bloco N
+  // Roteiro: depois da meta ainda falta desmascarar o hacker (pista extra + crachá do tio).
+  const hunting = story && complete && !unmasked;
+  const clueId = btc; // pista atual: 0 na abertura, N depois do bloco N; no roteiro, `total` é a extra
   const clueOpen = decrypted.includes(clueId);
+  const clueName = hunting ? 'Pista extra' : `Pista do bloco ${pad2(clueId + 1)}`;
 
   // Recreador: segurar a carteira por 2s zera a missão e volta à configuração.
   const askReset = () =>
@@ -42,7 +45,9 @@ export default function Home() {
       right={{ icon: 'history', label: 'Histórico de blocos', onPress: () => router.push('/history') }}
       scroll
       footer={
-        complete ? (
+        hunting ? (
+          <Button label="Escanear o crachá" icon="qrcode-scan" onPress={() => router.push('/scan')} />
+        ) : complete ? (
           <Button label="Ver missão completa" icon="flag-checkered" onPress={() => router.push('/complete')} />
         ) : (
           <Button
@@ -54,7 +59,7 @@ export default function Home() {
         )
       }
     >
-      {mode === 'versus' ? <MissionClock /> : null}
+      {mode === 'versus' || story ? <MissionClock /> : null}
 
       <Pressable onLongPress={askReset} delayLongPress={2000} accessible={false}>
         <Chamfer cut="lg" fill={color.surface} stroke={complete ? color.primary : color.lineStrong} style={styles.hero}>
@@ -63,10 +68,14 @@ export default function Home() {
             icon={complete ? 'lock-open-variant-outline' : 'lock-outline'}
             tone={complete ? 'primary' : 'muted'}
           />
-          <BtcAmount value={btc} tone={btc > 0 ? color.primary : color.text} />
+          <BtcAmount value={btc} tone={btc > 0 ? color.primary : color.text} millions={story} />
           <Txt variant="body" tone={color.muted}>
-            {complete
+            {hunting
+              ? 'Meta batida! Siga a pista extra e encontre o hacker.'
+              : complete
               ? 'Você recuperou todos os blocos.'
+              : story
+                ? `Meta: ${millions(total)} de BTC. ${missing === 1 ? 'Falta 1 bloco.' : `Faltam ${missing} blocos.`}`
               : missing === total
                 ? total === 1
                   ? 'Encontre o bloco escondido no resort para abrir a carteira.'
@@ -90,12 +99,12 @@ export default function Home() {
         <NodeTrack done={btc} total={total} size="lg" />
       </View>
 
-      {!complete ? (
+      {!complete || hunting ? (
         <PressableScale
           onPress={() => router.push({ pathname: '/clue/[id]', params: { id: String(clueId) } })}
           accessibilityRole="button"
           accessibilityLabel={
-            clueOpen ? `Pista do bloco ${pad2(clueId + 1)}: ${clueText(clueId, route)}` : 'Decifrar a pista atual'
+            clueOpen ? `${clueName}: ${clueText(clueId, route, story)}` : 'Decifrar a pista atual'
           }
         >
           <Chamfer
@@ -106,13 +115,13 @@ export default function Home() {
           >
             <View style={styles.clueHead}>
               <Txt variant="label" tone={clueOpen ? color.muted : color.cyan}>
-                Pista do bloco {pad2(clueId + 1)}
+                {clueName}
               </Txt>
               <Icon name={clueOpen ? 'arrow-right' : 'lock-outline'} tone={clueOpen ? color.muted : color.cyan} />
             </View>
             {clueOpen ? (
               <Txt variant="bodyBold" numberOfLines={2}>
-                {clueText(clueId, route)}
+                {clueText(clueId, route, story)}
               </Txt>
             ) : (
               <Txt variant="title">Nova pista cifrada. Toque para decifrar.</Txt>

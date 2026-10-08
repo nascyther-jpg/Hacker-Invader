@@ -39,6 +39,7 @@ export default function RootLayout() {
           <Stack.Screen name="clue/[id]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="history" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="complete" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="hack/[stage]" options={{ gestureEnabled: false, animation: 'none' }} />
         </Stack>
       </MissionProvider>
     </SafeAreaProvider>

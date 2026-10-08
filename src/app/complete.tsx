@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { BtcAmount } from '../components/BtcAmount';
@@ -14,9 +14,13 @@ import { useMission } from '../game/store';
 import { color, space } from '../theme/tokens';
 
 export default function Complete() {
-  const { blocks, complete, total, mode, setup, startedAt, finishedAt: doneAt } = useMission();
+  const { blocks, complete, total, mode, setup, startedAt, finishedAt: blocksAt, story, unmasked, unmaskedAt } = useMission();
   const versus = mode === 'versus';
   const home = () => router.replace('/home');
+  // No roteiro, a missão só acaba quando o hacker é desmascarado.
+  const doneAt = story ? unmaskedAt : blocksAt;
+
+  if (story && complete && !unmasked) return <Redirect href="/home" />;
 
   if (!complete) {
     // Chegou aqui sem terminar (link direto): volta para a base.
@@ -42,7 +46,7 @@ export default function Complete() {
           <Txt variant="label" tone={color.primary} center>
             {versus ? `Missão cumprida · ${TEAMS[setup.team].name}` : 'Missão cumprida'}
           </Txt>
-          <GlitchText center>Carteira recuperada</GlitchText>
+          <GlitchText center>{story ? 'Hacker desmascarado' : 'Carteira recuperada'}</GlitchText>
         </View>
 
         {versus ? (
@@ -60,13 +64,13 @@ export default function Complete() {
           </View>
         ) : (
           <View style={styles.amount}>
-            <BtcAmount value={total} tone={color.primary} />
+            <BtcAmount value={total} tone={color.primary} millions={story} />
           </View>
         )}
         <NodeTrack done={total} total={total} />
 
         <Txt variant="body" center>
-          {finalMessage(mode)}
+          {finalMessage(mode, story)}
         </Txt>
 
         <Chamfer cut="sm" fill={color.surface} stroke={color.line} style={styles.seal}>

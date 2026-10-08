@@ -8,10 +8,16 @@ import { Icon } from '../components/Icon';
 import { PressableScale } from '../components/PressableScale';
 import { Screen } from '../components/Screen';
 import { Txt } from '../components/Txt';
+import { VoiceRecorder } from '../components/VoiceRecorder';
 import {
   MIN_NODES,
   PERIODS,
+  STORY,
   TEAMS,
+  durationText,
+  hackerMessage,
+  millions,
+  whatsappMessage,
   maxNodesFor,
   pad2,
   placesFor,
@@ -21,10 +27,12 @@ import {
   type Team,
 } from '../game/config';
 import { useMission } from '../game/store';
+import { openWhatsApp } from '../game/whatsapp';
 import { color, space, touch } from '../theme/tokens';
 
 // Configuração do recreador, antes de entregar o celular às crianças:
-// período (Dia/Noite), número de pistas, modo de jogo e, no Hacker vs Hacker, o time deste aparelho.
+// roteiro do hacker (mensagem no WhatsApp e voz do tio), período (Dia/Noite), número de pistas,
+// modo de jogo e, no Hacker vs Hacker, o time deste aparelho.
 
 export default function Setup() {
   const { setup, start } = useMission();
@@ -32,6 +40,7 @@ export default function Setup() {
   const [mode, setMode] = useState<Mode>(setup.mode);
   const [team, setTeam] = useState<Team>(setup.team);
   const [period, setPeriod] = useState<Period>(setup.period);
+  const [story, setStory] = useState(setup.story);
   const versus = mode === 'versus';
   const max = maxNodesFor(period);
   const route = routeFor(period, total);
@@ -42,9 +51,15 @@ export default function Setup() {
     setTotal((t) => Math.min(t, maxNodesFor(p)));
   };
 
+  const chooseStory = (on: boolean) => {
+    setStory(on);
+    if (on) setTotal(Math.min(STORY.nodes, max));
+  };
+
   const begin = () => {
-    start({ total, mode, team, period });
-    router.replace('/home');
+    start({ total, mode, team, period, story });
+    // No roteiro, o hacker invade a tela assim que a missão começa.
+    router.replace(story ? { pathname: '/hack/[stage]', params: { stage: 'inicio' } } : '/home');
   };
 
   return (
@@ -56,10 +71,79 @@ export default function Setup() {
           label="Iniciar missão"
           icon="play"
           onPress={begin}
-          accessibilityHint={versus ? `Começa a missão do ${TEAMS[team].name} e liga o cronômetro` : 'Começa a missão'}
+          accessibilityHint={
+            story
+              ? 'Começa a missão e liga a contagem regressiva'
+              : versus
+                ? `Começa a missão do ${TEAMS[team].name} e liga o cronômetro`
+                : 'Começa a missão'
+          }
         />
       }
     >
+      <View style={styles.section}>
+        <Txt variant="label" tone={color.muted}>
+          Roteiro
+        </Txt>
+        <View style={styles.list} accessibilityRole="radiogroup">
+          <Choice
+            label="Roteiro do hacker"
+            description={`O hacker manda mensagem, invade o celular no meio e se revela no fim com a sua voz. Cada bloco vale 1 milhão de BTC e o relógio corre ${durationText(STORY.minutes)}.`}
+            icon="skull-outline"
+            tone="danger"
+            selected={story}
+            onPress={() => chooseStory(true)}
+          />
+          <Choice
+            label="Caça livre"
+            description="Só as pistas e a carteira, sem história nem prazo."
+            icon="map-search-outline"
+            selected={!story}
+            onPress={() => chooseStory(false)}
+          />
+        </View>
+      </View>
+
+      {story ? (
+        <>
+          <View style={styles.section}>
+            <Txt variant="label" tone={color.muted}>
+              1. Mensagem no WhatsApp
+            </Txt>
+            <Chamfer fill={color.surface} stroke={color.lineStrong} style={styles.box}>
+              <Txt variant="body">{hackerMessage('inicio', total)}</Txt>
+            </Chamfer>
+            <Button
+              label="Mandar no grupo"
+              icon="whatsapp"
+              variant="secondary"
+              onPress={() => openWhatsApp(whatsappMessage(total))}
+              accessibilityHint="Abre o WhatsApp com a mensagem do hacker pronta para mandar no grupo"
+            />
+            <Txt variant="body" tone={color.muted}>
+              Mande no grupo das crianças e depois toque em Iniciar missão.
+            </Txt>
+          </View>
+
+          <View style={styles.section}>
+            <Txt variant="label" tone={color.muted}>
+              2. Voz do hacker
+            </Txt>
+            <VoiceRecorder />
+          </View>
+
+          <View style={styles.section}>
+            <Txt variant="label" tone={color.muted}>
+              3. Crachá do hacker
+            </Txt>
+            <Txt variant="body" tone={color.muted}>
+              Leve o QR do crachá do hacker com você. Depois da meta, a pista extra manda as crianças te encontrarem e
+              escanearem o crachá.
+            </Txt>
+          </View>
+        </>
+      ) : null}
+
       <View style={styles.section}>
         <Txt variant="label" tone={color.muted}>
           Período
@@ -128,6 +212,11 @@ export default function Setup() {
         <Txt variant="label" tone={color.muted} nativeID="pistas-label">
           Número de pistas
         </Txt>
+        {story ? (
+          <Txt variant="body" tone={color.muted}>
+            Meta: {millions(total)} de BTC.
+          </Txt>
+        ) : null}
         <Chamfer fill={color.surface} stroke={color.lineStrong} style={styles.stepper}>
           <StepButton icon="minus" label="Menos uma pista" disabled={total <= MIN_NODES} onPress={() => setTotal(total - 1)} />
           <View
@@ -213,6 +302,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   section: { gap: space.md },
   list: { gap: space.sm },
+  box: { padding: space.lg },
   row: { flexDirection: 'row', gap: space.sm },
   stepper: {
     flexDirection: 'row',
