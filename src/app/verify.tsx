@@ -21,12 +21,13 @@ import { Screen } from '../components/Screen';
 import { Signal } from '../components/Signal';
 import { StatusTag } from '../components/StatusTag';
 import { Txt } from '../components/Txt';
-import { MISSION, blockHash, pad2 } from '../game/config';
+import { TEAMS, blockHash, pad2 } from '../game/config';
 import { useMission, type ScanResult } from '../game/store';
 import { color, space } from '../theme/tokens';
 
 // QR válido:   VERIFICANDO -> BLOCO VERIFICADO -> +1 BTC (carteira e progresso atualizam) -> pista
 // QR inválido: VERIFICANDO -> BLOCO NÃO RECONHECIDO -> tentar de novo
+// QR do outro time: VERIFICANDO -> BLOCO DE OUTRO TIME -> tentar de novo
 
 type Phase = 'verifying' | 'verified' | 'acquired';
 
@@ -35,7 +36,7 @@ const VERIFIED_MS = 1000;
 
 export default function Verify() {
   const { code = '' } = useLocalSearchParams<{ code: string }>();
-  const { check, acquire } = useMission();
+  const { check, acquire, total } = useMission();
   // O resultado é congelado na chegada: o estado muda logo depois (acquire).
   const [result] = useState<ScanResult>(() => check(code));
   const [phase, setPhase] = useState<Phase>('verifying');
@@ -52,7 +53,7 @@ export default function Verify() {
     if (phase === 'verified' && result.kind === 'valid') {
       const t = setTimeout(
         () => {
-          acquire(result.node.index);
+          acquire(result.index);
           setPhase('acquired');
         },
         reduced ? 500 : VERIFIED_MS,
@@ -71,18 +72,18 @@ export default function Verify() {
       return (
         <ResultScreen key="verified">
           <Signal icon="check-decagram-outline" tone="primary" />
-          <Heading tag={`Bloco ${pad2(result.node.index)}`} title="Bloco verificado" tone="primary" />
+          <Heading tag={`Bloco ${pad2(result.index)}`} title="Bloco verificado" tone="primary" />
           <Txt variant="code" tone={color.muted} center>
-            {blockHash(result.node.code)}
+            {blockHash(result.code)}
           </Txt>
         </ResultScreen>
       );
     }
-    return <Acquired index={result.node.index} />;
+    return <Acquired index={result.index} total={total} />;
   }
 
   if (result.kind === 'duplicate') {
-    const last = result.node.index >= MISSION.totalNodes;
+    const last = result.index >= total;
     return (
       <ResultScreen
         key="dup"
@@ -94,7 +95,7 @@ export default function Verify() {
               onPress={() =>
                 last
                   ? router.replace('/complete')
-                  : router.replace({ pathname: '/clue/[id]', params: { id: String(result.node.index) } })
+                  : router.replace({ pathname: '/clue/[id]', params: { id: String(result.index) } })
               }
             />
             <Button label="Escanear outro" variant="secondary" icon="qrcode-scan" onPress={retry} />
@@ -102,7 +103,7 @@ export default function Verify() {
         }
       >
         <Signal icon="check-decagram-outline" tone="cyan" />
-        <Heading tag={`Bloco ${pad2(result.node.index)}`} title="Bloco já recuperado" tone="cyan" />
+        <Heading tag={`Bloco ${pad2(result.index)}`} title="Bloco já recuperado" tone="cyan" />
         <Txt variant="body" tone={color.muted} center>
           Esse BTC já está na sua carteira. Procure o próximo bloco.
         </Txt>
@@ -126,9 +127,36 @@ export default function Verify() {
         }
       >
         <Signal icon="shield-lock-outline" tone="cyan" enter="shake" />
-        <Heading tag={`Bloco ${pad2(result.node.index)}`} title="Bloco protegido" tone="cyan" />
+        <Heading tag={`Bloco ${pad2(result.index)}`} title="Bloco protegido" tone="cyan" />
         <Txt variant="body" tone={color.muted} center>
           Ele só abre depois do bloco {pad2(result.expected)}. Siga a pista atual.
+        </Txt>
+      </ResultScreen>
+    );
+  }
+
+  if (result.kind === 'foreign') {
+    return (
+      <ResultScreen
+        key="foreign"
+        footer={
+          <>
+            <Button label="Escanear outro" icon="qrcode-scan" onPress={retry} />
+            <Button label="Voltar à base" variant="secondary" onPress={home} />
+          </>
+        }
+      >
+        <Signal icon="account-cancel-outline" tone="danger" enter="shake" />
+        <Heading
+          tag={result.owner === 'solo' ? 'Missão solo' : TEAMS[result.owner].name}
+          title="Bloco de outro time"
+          tone="danger"
+          icon="close-octagon-outline"
+        />
+        <Txt variant="body" tone={color.muted} center>
+          {result.owner === 'solo'
+            ? 'Esse bloco é da missão solo. Procure o QR do seu time.'
+            : `Esse bloco é do ${TEAMS[result.owner].name}. Deixe ele no lugar e procure o do seu time.`}
         </Txt>
       </ResultScreen>
     );
@@ -209,8 +237,8 @@ function Verifying({ code }: { code: string }) {
   );
 }
 
-function Acquired({ index }: { index: number }) {
-  const last = index >= MISSION.totalNodes;
+function Acquired({ index, total }: { index: number; total: number }) {
+  const last = index >= total;
   return (
     <Screen
       centered
@@ -242,7 +270,7 @@ function Acquired({ index }: { index: number }) {
             Carteira
           </Txt>
           <WalletCount to={index} />
-          <NodeTrack done={index} highlight={index} />
+          <NodeTrack done={index} total={total} highlight={index} />
         </Chamfer>
       </Animated.View>
     </Screen>
