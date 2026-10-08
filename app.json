@@ -12,6 +12,8 @@
       "supportsTablet": false
     },
     "android": {
+      "package": "com.m2estudios.blacknode",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#07080B",
         "foregroundImage": "./assets/android-icon-foreground.png",
