@@ -20,7 +20,7 @@ export type Period = 'dia' | 'noite';
 
 export const PERIODS: Record<Period, { name: string; description: string }> = {
   dia: { name: 'Dia', description: 'Resort inteiro, com piscinas e áreas externas.' },
-  noite: { name: 'Noite', description: 'Só áreas iluminadas, cobertas ou com equipe do hotel.' },
+  noite: { name: 'Noite', description: 'Só áreas iluminadas, cobertas ou com equipe do hotel. A Cidade dos Sonhos fecha às 22h.' },
 };
 
 export type Place = {
@@ -54,6 +54,7 @@ export const PLACES: Place[] = [
   {
     name: 'Escadaria do Lobby',
     dia: 'No pé da escadaria, nunca nos degraus.',
+    noite: 'No pé da escadaria, nunca nos degraus.',
     hint: 'O próximo bloco está onde se sobe e se desce a partir do lobby. Fica lá embaixo, nada de procurar nos degraus.',
   },
   {
