@@ -32,6 +32,7 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="index" options={{ animation: 'none' }} />
+          <Stack.Screen name="setup" options={{ gestureEnabled: false }} />
           <Stack.Screen name="home" options={{ gestureEnabled: false }} />
           <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
           <Stack.Screen name="verify" options={{ gestureEnabled: false }} />

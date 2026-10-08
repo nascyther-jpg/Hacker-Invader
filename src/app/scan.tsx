@@ -13,12 +13,13 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Brackets } from '../components/Brackets';
 import { Button } from '../components/Button';
+import { Chamfer } from '../components/Chamfer';
 import { Icon } from '../components/Icon';
 import { PressableScale } from '../components/PressableScale';
 import { Screen } from '../components/Screen';
 import { Signal } from '../components/Signal';
 import { Txt } from '../components/Txt';
-import { color, radius, space, touch } from '../theme/tokens';
+import { color, space, touch } from '../theme/tokens';
 import { typography } from '../theme/type';
 
 const FRAME = 260;
@@ -127,21 +128,31 @@ function Viewfinder({
           </Brackets>
         </View>
 
-        <View style={styles.bottom}>
+        <Chamfer fill={color.scrim} stroke={color.line} style={styles.bottom}>
           <Txt variant="title" center>
             Aponte para o código do bloco
           </Txt>
           <Button label="Digitar código" variant="ghost" icon="keyboard-outline" onPress={onManual} />
-        </View>
+        </Chamfer>
       </View>
     </View>
   );
 }
 
-function RoundButton({ icon, label, onPress }: { icon: 'close' | 'flashlight' | 'flashlight-off'; label: string; onPress: () => void }) {
+function RoundButton({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: 'close' | 'flashlight' | 'flashlight-off';
+  label: string;
+  onPress: () => void;
+}) {
   return (
     <PressableScale onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={styles.round}>
-      <Icon name={icon} />
+      <Chamfer cut="sm" fill={color.scrim} stroke={color.lineStrong} style={styles.roundInner}>
+        <Icon name={icon} />
+      </Chamfer>
     </PressableScale>
   );
 }
@@ -159,24 +170,26 @@ function ManualEntry({ onSubmit, onCancel }: { onSubmit: (code: string) => void;
           <Txt variant="label" tone={color.muted} nativeID="code-label">
             Código do bloco
           </Txt>
-          <TextInput
-            value={code}
-            onChangeText={(t) => setCode(t.toUpperCase())}
-            placeholder="BLACKNODE-00-XXXX"
-            placeholderTextColor={color.muted}
-            autoCapitalize="characters"
-            autoCorrect={false}
-            autoComplete="off"
-            textContentType="none"
-            keyboardType="default"
-            returnKeyType="go"
-            autoFocus
-            onSubmitEditing={() => onSubmit(code)}
-            accessibilityLabelledBy="code-label"
-            accessibilityLabel="Código do bloco"
-            selectionColor={color.primary}
-            style={styles.input}
-          />
+          <Chamfer fill={color.surface} stroke={color.lineStrong}>
+            <TextInput
+              value={code}
+              onChangeText={(t) => setCode(t.toUpperCase())}
+              placeholder="BLACKNODE-00-XXXX"
+              placeholderTextColor={color.muted}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              autoComplete="off"
+              textContentType="none"
+              keyboardType="default"
+              returnKeyType="go"
+              autoFocus
+              onSubmitEditing={() => onSubmit(code)}
+              accessibilityLabelledBy="code-label"
+              accessibilityLabel="Código do bloco"
+              selectionColor={color.primary}
+              style={styles.input}
+            />
+          </Chamfer>
           <Txt variant="body" tone={color.muted}>
             Está escrito embaixo do QR Code.
           </Txt>
@@ -204,18 +217,13 @@ const styles = StyleSheet.create({
     gap: space.sm,
     paddingHorizontal: space.md,
     paddingVertical: space.sm,
-    borderRadius: radius.sm,
     backgroundColor: color.scrim,
+    borderLeftWidth: 3,
+    borderLeftColor: color.primary,
   },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: color.primary },
-  round: {
-    width: touch.icon,
-    height: touch.icon,
-    borderRadius: touch.icon / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: color.scrim,
-  },
+  dot: { width: 8, height: 8, backgroundColor: color.primary },
+  round: { width: touch.icon, height: touch.icon },
+  roundInner: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   middle: { alignItems: 'center' },
   frame: { width: FRAME, height: FRAME, overflow: 'hidden' },
   sweep: { position: 'absolute', left: 12, right: 12, top: 0, height: 2, backgroundColor: color.primary, opacity: 0.8 },
@@ -223,16 +231,12 @@ const styles = StyleSheet.create({
     marginHorizontal: space.screen,
     padding: space.lg,
     gap: space.xs,
-    borderRadius: radius.md,
-    backgroundColor: color.scrim,
   },
   manual: { gap: space.md, paddingTop: space.lg },
   input: {
+    // relative: no web o SVG do Chamfer (absoluto) cobriria um input estático.
+    position: 'relative',
     minHeight: touch.button,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: color.lineStrong,
-    backgroundColor: color.surface,
     paddingHorizontal: space.lg,
     color: color.text,
     ...typography.input,

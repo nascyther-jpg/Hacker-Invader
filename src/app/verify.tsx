@@ -13,18 +13,21 @@ import Animated, {
 import { BtcAmount } from '../components/BtcAmount';
 import { Brackets } from '../components/Brackets';
 import { Button } from '../components/Button';
+import { Chamfer } from '../components/Chamfer';
+import { GlitchText } from '../components/GlitchText';
 import { Icon } from '../components/Icon';
 import { NodeTrack } from '../components/NodeTrack';
 import { Screen } from '../components/Screen';
 import { Signal } from '../components/Signal';
 import { StatusTag } from '../components/StatusTag';
 import { Txt } from '../components/Txt';
-import { MISSION, blockHash, pad2 } from '../game/config';
+import { TEAMS, blockHash, pad2 } from '../game/config';
 import { useMission, type ScanResult } from '../game/store';
-import { color, radius, space } from '../theme/tokens';
+import { color, space } from '../theme/tokens';
 
 // QR válido:   VERIFICANDO -> BLOCO VERIFICADO -> +1 BTC (carteira e progresso atualizam) -> pista
 // QR inválido: VERIFICANDO -> BLOCO NÃO RECONHECIDO -> tentar de novo
+// QR do outro time: VERIFICANDO -> BLOCO DE OUTRO TIME -> tentar de novo
 
 type Phase = 'verifying' | 'verified' | 'acquired';
 
@@ -33,7 +36,7 @@ const VERIFIED_MS = 1000;
 
 export default function Verify() {
   const { code = '' } = useLocalSearchParams<{ code: string }>();
-  const { check, acquire } = useMission();
+  const { check, acquire, total } = useMission();
   // O resultado é congelado na chegada: o estado muda logo depois (acquire).
   const [result] = useState<ScanResult>(() => check(code));
   const [phase, setPhase] = useState<Phase>('verifying');
@@ -41,14 +44,20 @@ export default function Verify() {
 
   useEffect(() => {
     if (phase === 'verifying') {
-      const t = setTimeout(() => setPhase(result.kind === 'valid' ? 'verified' : 'acquired'), reduced ? 400 : VERIFY_MS);
+      const t = setTimeout(
+        () => setPhase(result.kind === 'valid' ? 'verified' : 'acquired'),
+        reduced ? 400 : VERIFY_MS,
+      );
       return () => clearTimeout(t);
     }
     if (phase === 'verified' && result.kind === 'valid') {
-      const t = setTimeout(() => {
-        acquire(result.node.index);
-        setPhase('acquired');
-      }, reduced ? 500 : VERIFIED_MS);
+      const t = setTimeout(
+        () => {
+          acquire(result.index);
+          setPhase('acquired');
+        },
+        reduced ? 500 : VERIFIED_MS,
+      );
       return () => clearTimeout(t);
     }
   }, [phase, result, reduced, acquire]);
@@ -63,18 +72,18 @@ export default function Verify() {
       return (
         <ResultScreen key="verified">
           <Signal icon="check-decagram-outline" tone="primary" />
-          <Heading tag={`Bloco ${pad2(result.node.index)}`} title="Bloco verificado" tone="primary" />
+          <Heading tag={`Bloco ${pad2(result.index)}`} title="Bloco verificado" tone="primary" />
           <Txt variant="code" tone={color.muted} center>
-            {blockHash(result.node.code)}
+            {blockHash(result.code)}
           </Txt>
         </ResultScreen>
       );
     }
-    return <Acquired index={result.node.index} />;
+    return <Acquired index={result.index} total={total} />;
   }
 
   if (result.kind === 'duplicate') {
-    const last = result.node.index >= MISSION.totalNodes;
+    const last = result.index >= total;
     return (
       <ResultScreen
         key="dup"
@@ -86,7 +95,7 @@ export default function Verify() {
               onPress={() =>
                 last
                   ? router.replace('/complete')
-                  : router.replace({ pathname: '/clue/[id]', params: { id: String(result.node.index) } })
+                  : router.replace({ pathname: '/clue/[id]', params: { id: String(result.index) } })
               }
             />
             <Button label="Escanear outro" variant="secondary" icon="qrcode-scan" onPress={retry} />
@@ -94,7 +103,7 @@ export default function Verify() {
         }
       >
         <Signal icon="check-decagram-outline" tone="cyan" />
-        <Heading tag={`Bloco ${pad2(result.node.index)}`} title="Bloco já recuperado" tone="cyan" />
+        <Heading tag={`Bloco ${pad2(result.index)}`} title="Bloco já recuperado" tone="cyan" />
         <Txt variant="body" tone={color.muted} center>
           Esse BTC já está na sua carteira. Procure o próximo bloco.
         </Txt>
@@ -111,18 +120,43 @@ export default function Verify() {
             <Button
               label="Ver pista atual"
               icon="arrow-right"
-              onPress={() =>
-                router.replace({ pathname: '/clue/[id]', params: { id: String(result.expected - 1) } })
-              }
+              onPress={() => router.replace({ pathname: '/clue/[id]', params: { id: String(result.expected - 1) } })}
             />
             <Button label="Voltar à base" variant="secondary" onPress={home} />
           </>
         }
       >
         <Signal icon="shield-lock-outline" tone="cyan" enter="shake" />
-        <Heading tag={`Bloco ${pad2(result.node.index)}`} title="Bloco protegido" tone="cyan" />
+        <Heading tag={`Bloco ${pad2(result.index)}`} title="Bloco protegido" tone="cyan" />
         <Txt variant="body" tone={color.muted} center>
           Ele só abre depois do bloco {pad2(result.expected)}. Siga a pista atual.
+        </Txt>
+      </ResultScreen>
+    );
+  }
+
+  if (result.kind === 'foreign') {
+    return (
+      <ResultScreen
+        key="foreign"
+        footer={
+          <>
+            <Button label="Escanear outro" icon="qrcode-scan" onPress={retry} />
+            <Button label="Voltar à base" variant="secondary" onPress={home} />
+          </>
+        }
+      >
+        <Signal icon="account-cancel-outline" tone="danger" enter="shake" />
+        <Heading
+          tag={result.owner === 'solo' ? 'Missão solo' : TEAMS[result.owner].name}
+          title="Bloco de outro time"
+          tone="danger"
+          icon="close-octagon-outline"
+        />
+        <Txt variant="body" tone={color.muted} center>
+          {result.owner === 'solo'
+            ? 'Esse bloco é da missão solo. Procure o QR do seu time.'
+            : `Esse bloco é do ${TEAMS[result.owner].name}. Deixe ele no lugar e procure o do seu time.`}
         </Txt>
       </ResultScreen>
     );
@@ -138,8 +172,8 @@ export default function Verify() {
         </>
       }
     >
-      <Signal icon="alert-octagon-outline" tone="warning" enter="shake" />
-      <Heading tag="Erro de leitura" title="Bloco não reconhecido" tone="warning" icon="close-octagon-outline" />
+      <Signal icon="alert-octagon-outline" tone="danger" enter="shake" />
+      <Heading tag="Erro de leitura" title="Bloco não reconhecido" tone="danger" icon="close-octagon-outline" />
       <Txt variant="body" tone={color.muted} center>
         Esse código não faz parte da missão. Procure outro bloco.
       </Txt>
@@ -165,15 +199,13 @@ function Heading({
 }: {
   tag: string;
   title: string;
-  tone: 'primary' | 'cyan' | 'warning';
+  tone: 'primary' | 'cyan' | 'danger';
   icon?: 'cube-outline' | 'close-octagon-outline';
 }) {
   return (
     <View style={styles.heading}>
       <StatusTag label={tag} icon={icon} tone={tone} center />
-      <Txt variant="display" center accessibilityRole="header">
-        {title}
-      </Txt>
+      <GlitchText center>{title}</GlitchText>
     </View>
   );
 }
@@ -205,8 +237,8 @@ function Verifying({ code }: { code: string }) {
   );
 }
 
-function Acquired({ index }: { index: number }) {
-  const last = index >= MISSION.totalNodes;
+function Acquired({ index, total }: { index: number; total: number }) {
+  const last = index >= total;
   return (
     <Screen
       centered
@@ -225,21 +257,21 @@ function Acquired({ index }: { index: number }) {
       <Animated.View entering={FadeIn.duration(200)} style={styles.stack} accessibilityLiveRegion="polite">
         <Signal icon="bitcoin" tone="primary" glowing />
         <View style={styles.heading}>
-          <Txt variant="display" tone={color.primary} center accessibilityRole="header">
+          <GlitchText tone={color.primary} center>
             +1 BTC
-          </Txt>
+          </GlitchText>
           <Txt variant="body" tone={color.muted} center>
             {last ? 'Último bloco recuperado.' : 'Novo bloco na sua carteira.'}
           </Txt>
         </View>
 
-        <View style={styles.wallet}>
+        <Chamfer fill={color.surface} stroke={color.line} style={styles.wallet}>
           <Txt variant="label" tone={color.muted}>
             Carteira
           </Txt>
           <WalletCount to={index} />
-          <NodeTrack done={index} highlight={index} />
-        </View>
+          <NodeTrack done={index} total={total} highlight={index} />
+        </Chamfer>
       </Animated.View>
     </Screen>
   );
@@ -255,7 +287,11 @@ function WalletCount({ to }: { to: number }) {
     return () => clearTimeout(t);
   }, [value, to]);
   return (
-    <Animated.View key={value} style={styles.count} entering={value === to && !reduced ? ZoomIn.springify().damping(12) : undefined}>
+    <Animated.View
+      key={value}
+      style={styles.count}
+      entering={value === to && !reduced ? ZoomIn.springify().damping(12) : undefined}
+    >
       <BtcAmount value={value} tone={value === to ? color.primary : color.muted} />
     </Animated.View>
   );
@@ -265,15 +301,8 @@ const styles = StyleSheet.create({
   stack: { gap: space.xl, alignItems: 'stretch' },
   heading: { gap: space.md, alignItems: 'center' },
   verifyFrame: { width: 128, height: 128, alignSelf: 'center', alignItems: 'center', justifyContent: 'center' },
-  track: { height: 6, borderRadius: radius.full, backgroundColor: color.line, overflow: 'hidden' },
+  track: { height: 6, backgroundColor: color.line, overflow: 'hidden' },
   fill: { flex: 1, backgroundColor: color.cyan, transformOrigin: 'left' },
   count: { alignSelf: 'flex-start' },
-  wallet: {
-    gap: space.lg,
-    padding: space.xl,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: color.line,
-    backgroundColor: color.surface,
-  },
+  wallet: { gap: space.lg, padding: space.xl },
 });

@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
-import { radius, space, toneColor, type Tone } from '../theme/tokens';
+import { space, toneColor, type Tone } from '../theme/tokens';
+import { Chamfer } from './Chamfer';
 import { Icon, type IconName } from './Icon';
 import { Txt } from './Txt';
 
@@ -17,24 +18,28 @@ export function StatusTag({
 }) {
   const c = toneColor[tone];
   return (
-    <View style={[styles.tag, { backgroundColor: c.bg }, center && styles.center]}>
-      <Icon name={icon} size="sm" tone={c.fg} />
-      <Txt variant="label" tone={c.fg}>
-        {label}
-      </Txt>
+    <View style={[styles.wrap, center && styles.center]}>
+      <Chamfer cut="sm" corners={['tl']} fill={c.bg} style={styles.tag}>
+        <View style={[styles.bar, { backgroundColor: c.fg }]} />
+        <Icon name={icon} size="sm" tone={c.fg} />
+        <Txt variant="label" tone={c.fg}>
+          {label}
+        </Txt>
+      </Chamfer>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: { alignSelf: 'flex-start' },
+  center: { alignSelf: 'center' },
   tag: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     gap: space.sm,
     paddingVertical: space.xs + 2,
-    paddingHorizontal: space.md,
-    borderRadius: radius.sm,
+    paddingLeft: space.md + 2,
+    paddingRight: space.md,
   },
-  center: { alignSelf: 'center' },
+  bar: { position: 'absolute', left: 0, top: 6, bottom: 0, width: 3 },
 });

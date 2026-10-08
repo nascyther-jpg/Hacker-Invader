@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { Brackets } from '../components/Brackets';
+import { GlitchText } from '../components/GlitchText';
 import { Icon } from '../components/Icon';
 import { Screen } from '../components/Screen';
 import { Txt } from '../components/Txt';
-import { color, glow, space } from '../theme/tokens';
+import { useMission } from '../game/store';
+import { color, space } from '../theme/tokens';
 
 // Boot: três linhas de sistema e entra na base. Toque pula.
 const LINES = ['Conectando ao nó secreto', 'Canal protegido', 'Agente identificado'];
@@ -15,10 +17,13 @@ const STEP = 520;
 export default function Boot() {
   const reduced = useReducedMotion();
   const [step, setStep] = useState(0);
+  const { started } = useMission();
+  // Sem missão em andamento: o recreador configura antes de entregar o celular.
+  const enter = () => router.replace(started ? '/home' : '/setup');
 
   useEffect(() => {
     if (step > LINES.length) {
-      router.replace('/home');
+      enter();
       return;
     }
     const t = setTimeout(() => setStep((s) => s + 1), step === 0 ? 400 : reduced ? 200 : STEP);
@@ -28,7 +33,7 @@ export default function Boot() {
   return (
     <Pressable
       style={styles.flex}
-      onPress={() => router.replace('/home')}
+      onPress={enter}
       accessibilityRole="button"
       accessibilityLabel="Entrar na missão"
     >
@@ -37,9 +42,9 @@ export default function Boot() {
           <Brackets style={styles.mark} tone={color.primary} size={18}>
             <Icon name="cube-outline" size="xl" tone={color.primary} />
           </Brackets>
-          <Txt variant="display" center style={styles.word}>
+          <GlitchText center tone={color.primary} trigger={step >= LINES.length}>
             BLACK NODE
-          </Txt>
+          </GlitchText>
           <Txt variant="label" tone={color.muted} center>
             Missão: carteira secreta
           </Txt>
@@ -71,10 +76,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: space.lg,
-    borderRadius: 60,
-    boxShadow: glow.primary,
   },
-  word: { letterSpacing: 6 },
   log: { minHeight: 90, gap: space.sm, alignSelf: 'center', marginTop: space.xxl },
   line: { flexDirection: 'row', gap: space.md },
 });
