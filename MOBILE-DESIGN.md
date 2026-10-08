@@ -27,6 +27,7 @@ src/app/
   clue/[id]    Pista (0 = abertura, N = liberada pelo bloco N)
   history      Cadeia de blocos
   complete     Missão completa
+  hack/[stage] Invasão do hacker (roteiro): inicio, meio (imagem carregando), final (voz do tio)
 ```
 
 ## Tokens (`src/theme`)
@@ -53,7 +54,7 @@ src/app/
 
 ## Componentes (`src/components`)
 
-`Screen`, `Txt`, `Icon` (só MaterialCommunityIcons), `Button` (primary / secondary / ghost), `PressableScale`, `Chamfer`, `GlitchText`, `Brackets`, `StatusTag` (sempre ícone + texto), `NodeTrack` (progresso 0/N a N/N; acima de 6 nós eles encolhem para caber), `Choice` (opção de rádio), `MissionClock` (time + cronômetro do Hacker vs Hacker), `BtcAmount`, `Signal` (ícone de resultado com entrada pop/shake), `useDecrypt`.
+`Screen`, `Txt`, `Icon` (só MaterialCommunityIcons), `Button` (primary / secondary / ghost), `PressableScale`, `Chamfer`, `GlitchText`, `Brackets`, `StatusTag` (sempre ícone + texto), `NodeTrack` (progresso 0/N a N/N; acima de 6 nós eles encolhem para caber), `Choice` (opção de rádio), `MissionClock` (time + cronômetro do Hacker vs Hacker; contagem regressiva e imagem carregando no roteiro), `VoiceRecorder` (voz do tio), `BtcAmount`, `Signal` (ícone de resultado com entrada pop/shake), `useDecrypt`.
 
 ## Movimento
 
@@ -75,3 +76,8 @@ Com "reduzir movimento" ligado, tudo vira instantâneo.
 - Número de pistas: 1 a 10 (padrão 4), limitado aos lugares permitidos no período. O bloco N fica na parada N da rota; a pista N leva à parada N+1.
 - Período Dia/Noite: locais do Mavsa Resort com classificação em `docs/locais-mavsa.md`. À noite, só áreas iluminadas, cobertas ou com equipe. As folhas de QR não trazem o lugar (ele muda com o período).
 - Hacker vs Hacker: Time Amarelo (QR `BLACKNODE-Axx`) e Time Ciano (`BLACKNODE-Bxx`), mesma rota. QR de outro conjunto mostra "Bloco de outro time". Cronômetro do início até o último bloco; o recreador compara os tempos dos dois celulares.
+- Roteiro do hacker (ideia da gestora do Mavsa, padrão desde 2026-10-08): 6 pistas, cada bloco vale 1 milhão de BTC, meta = número de blocos em milhões, contagem regressiva de 1 hora (`STORY` em config.ts). O tempo esgotado só fica vermelho: a caça continua e o tio decide.
+  - Antes de começar, o tio manda a mensagem do hacker no grupo pelo botão do WhatsApp (o app não envia sozinho) e grava a própria voz.
+  - Invasões em vermelho (`/hack`): ao iniciar, depois do bloco da metade (3 de 6, entra sozinha) com "imagem carregando" acompanhando o tempo gasto, e na meta, tocando a voz gravada.
+  - Depois da meta vem a pista extra; a missão acaba quando as crianças escaneiam o crachá do tio (`HACKER_CODE`, folha `qr-cracha-hacker-a4.pdf`). Escaneado antes da meta, mostra "Ainda não".
+  - "Caça livre" mantém o jogo antigo, sem história nem prazo.
