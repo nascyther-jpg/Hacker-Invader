@@ -8,22 +8,42 @@ import { Icon } from '../components/Icon';
 import { PressableScale } from '../components/PressableScale';
 import { Screen } from '../components/Screen';
 import { Txt } from '../components/Txt';
-import { MAX_NODES, MIN_NODES, PLACES, TEAMS, pad2, type Mode, type Team } from '../game/config';
+import {
+  MIN_NODES,
+  PERIODS,
+  TEAMS,
+  maxNodesFor,
+  pad2,
+  placesFor,
+  routeFor,
+  type Mode,
+  type Period,
+  type Team,
+} from '../game/config';
 import { useMission } from '../game/store';
 import { color, space, touch } from '../theme/tokens';
 
 // Configuração do recreador, antes de entregar o celular às crianças:
-// número de pistas, modo de jogo e, no Hacker vs Hacker, o time deste aparelho.
+// período (Dia/Noite), número de pistas, modo de jogo e, no Hacker vs Hacker, o time deste aparelho.
 
 export default function Setup() {
   const { setup, start } = useMission();
   const [total, setTotal] = useState(setup.total);
   const [mode, setMode] = useState<Mode>(setup.mode);
   const [team, setTeam] = useState<Team>(setup.team);
+  const [period, setPeriod] = useState<Period>(setup.period);
   const versus = mode === 'versus';
+  const max = maxNodesFor(period);
+  const route = routeFor(period, total);
+
+  // À noite há menos lugares permitidos: o número de pistas acompanha.
+  const choosePeriod = (p: Period) => {
+    setPeriod(p);
+    setTotal((t) => Math.min(t, maxNodesFor(p)));
+  };
 
   const begin = () => {
-    start({ total, mode, team });
+    start({ total, mode, team, period });
     router.replace('/home');
   };
 
@@ -40,6 +60,25 @@ export default function Setup() {
         />
       }
     >
+      <View style={styles.section}>
+        <Txt variant="label" tone={color.muted}>
+          Período
+        </Txt>
+        <View style={styles.list} accessibilityRole="radiogroup">
+          {(['dia', 'noite'] as Period[]).map((p) => (
+            <Choice
+              key={p}
+              label={PERIODS[p].name}
+              description={`${PERIODS[p].description} ${placesFor(p).length} lugares.`}
+              icon={p === 'dia' ? 'weather-sunny' : 'weather-night'}
+              tone={p === 'dia' ? 'primary' : 'cyan'}
+              selected={period === p}
+              onPress={() => choosePeriod(p)}
+            />
+          ))}
+        </View>
+      </View>
+
       <View style={styles.section}>
         <Txt variant="label" tone={color.muted}>
           Modo de jogo
@@ -98,7 +137,7 @@ export default function Setup() {
             accessibilityLabel={`${total} ${total === 1 ? 'pista' : 'pistas'}`}
             accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
             onAccessibilityAction={(e) => {
-              if (e.nativeEvent.actionName === 'increment') setTotal(Math.min(MAX_NODES, total + 1));
+              if (e.nativeEvent.actionName === 'increment') setTotal(Math.min(max, total + 1));
               if (e.nativeEvent.actionName === 'decrement') setTotal(Math.max(MIN_NODES, total - 1));
             }}
           >
@@ -109,7 +148,7 @@ export default function Setup() {
               {total === 1 ? 'bloco' : 'blocos'}
             </Txt>
           </View>
-          <StepButton icon="plus" label="Mais uma pista" disabled={total >= MAX_NODES} onPress={() => setTotal(total + 1)} />
+          <StepButton icon="plus" label="Mais uma pista" disabled={total >= max} onPress={() => setTotal(total + 1)} />
         </Chamfer>
       </View>
 
@@ -119,16 +158,21 @@ export default function Setup() {
         </Txt>
         <Txt variant="body" tone={color.muted}>
           {versus
-            ? 'Em cada lugar, esconda o QR do bloco com o mesmo número dos dois times.'
-            : 'Esconda cada QR no lugar com o mesmo número.'}
+            ? 'Em cada lugar, esconda o QR do bloco com o mesmo número dos dois times. A lista muda com o período e o número de pistas.'
+            : 'Esconda cada QR no lugar com o mesmo número. A lista muda com o período e o número de pistas.'}
         </Txt>
         <View>
-          {PLACES.slice(0, total).map((p, i) => (
+          {route.map((p, i) => (
             <View key={p.name} style={styles.place}>
               <Txt variant="code" tone={color.primary}>
                 {pad2(i + 1)}
               </Txt>
-              <Txt variant="bodyBold">{p.name}</Txt>
+              <View style={styles.flex}>
+                <Txt variant="bodyBold">{p.name}</Txt>
+                <Txt variant="body" tone={color.muted} style={styles.where}>
+                  {p.where}
+                </Txt>
+              </View>
             </View>
           ))}
         </View>
@@ -179,12 +223,13 @@ const styles = StyleSheet.create({
   step: { width: STEP, height: STEP },
   stepInner: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   count: { alignItems: 'center' },
+  where: { fontSize: 15, lineHeight: 21 },
   number: { fontSize: 72, lineHeight: 72 },
   place: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: space.md,
-    minHeight: 40,
+    paddingVertical: space.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: color.line,
   },
