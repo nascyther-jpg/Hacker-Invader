@@ -15,7 +15,7 @@ import { useMission } from '../game/store';
 import { color, glow, space, touch } from '../theme/tokens';
 
 export default function Home() {
-  const { btc, total, mode, started, complete, decrypted, reset } = useMission();
+  const { btc, total, mode, route, started, complete, decrypted, reset } = useMission();
   const missing = total - btc;
   const clueId = btc; // pista atual: 0 na abertura, N depois do bloco N
   const clueOpen = decrypted.includes(clueId);
@@ -95,7 +95,7 @@ export default function Home() {
           onPress={() => router.push({ pathname: '/clue/[id]', params: { id: String(clueId) } })}
           accessibilityRole="button"
           accessibilityLabel={
-            clueOpen ? `Pista do bloco ${pad2(clueId + 1)}: ${clueText(clueId, total)}` : 'Decifrar a pista atual'
+            clueOpen ? `Pista do bloco ${pad2(clueId + 1)}: ${clueText(clueId, route)}` : 'Decifrar a pista atual'
           }
         >
           <Chamfer
@@ -112,7 +112,7 @@ export default function Home() {
             </View>
             {clueOpen ? (
               <Txt variant="bodyBold" numberOfLines={2}>
-                {clueText(clueId, total)}
+                {clueText(clueId, route)}
               </Txt>
             ) : (
               <Txt variant="title">Nova pista cifrada. Toque para decifrar.</Txt>

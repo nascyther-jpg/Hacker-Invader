@@ -1,6 +1,8 @@
 """Gera as folhas A4 com os QR dos blocos, uma por conjunto (solo, Time Amarelo, Time Ciano).
 
-Lê os códigos e os lugares direto de src/game/config.ts, então as folhas sempre batem com o app.
+Lê os códigos direto de src/game/config.ts, então as folhas sempre batem com o app.
+O lugar de cada bloco não vai impresso: ele muda com o período (Dia/Noite) e o número de pistas,
+e aparece na tela de configuração do app.
 
 Uso:  python3 scripts/gerar_qr.py <pasta de saída>
 Precisa de: pip install qrcode pillow reportlab  (e `npm install` para as fontes).
@@ -38,8 +40,7 @@ def read_config():
     for key in SETS:
         block = re.search(rf'\n  {key}: \[(.*?)\]', src, re.S).group(1)
         codes[key] = re.findall(r"'(BLACKNODE-[^']+)'", block)
-    places = re.findall(r"name: '([^']+)'", src.split('export const PLACES')[1].split('];')[0])
-    return codes, places
+    return codes
 
 
 def qr_image(text):
@@ -49,7 +50,7 @@ def qr_image(text):
     return ImageReader(q.make_image(fill_color='black', back_color='white').get_image())
 
 
-def draw_sheet(path, meta, codes, places):
+def draw_sheet(path, meta, codes):
     W, H = A4
     c = canvas.Canvas(str(path), pagesize=A4)
     c.setTitle(f'BLACK NODE · QR {meta["title"]}')
@@ -77,12 +78,12 @@ def draw_sheet(path, meta, codes, places):
             col, row = slot % 2, slot // 2
             x = margin + col * (cw + gap)
             y = H - top - (row + 1) * ch - row * gap
-            draw_card(c, x, y, cw, ch, i + 1, codes[i], places[i], meta)
+            draw_card(c, x, y, cw, ch, i + 1, codes[i], meta)
         c.showPage()
     c.save()
 
 
-def draw_card(c, x, y, w, h, n, code, place, meta):
+def draw_card(c, x, y, w, h, n, code, meta):
     c.setStrokeColor(HexColor('#999999'))
     c.setLineWidth(0.8)
     c.setDash(4, 3)
@@ -106,15 +107,15 @@ def draw_card(c, x, y, w, h, n, code, place, meta):
     c.drawCentredString(cx, y + 21 * mm, code)
     c.setFont('Read', 10)
     c.setFillColor(HexColor('#555555'))
-    c.drawCentredString(cx, y + 9 * mm, f'Esconder em: {place}')
+    c.drawCentredString(cx, y + 9 * mm, 'Onde esconder: veja a configuração do app')
 
 
 def main():
     out = Path(sys.argv[1] if len(sys.argv) > 1 else '.')
     out.mkdir(parents=True, exist_ok=True)
-    codes, places = read_config()
+    codes = read_config()
     for key, meta in SETS.items():
-        draw_sheet(out / meta['file'], meta, codes[key], places)
+        draw_sheet(out / meta['file'], meta, codes[key])
         print(out / meta['file'], len(codes[key]), 'blocos')
 
 

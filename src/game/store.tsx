@@ -1,12 +1,12 @@
 import { createContext, useCallback, useContext, useMemo, useReducer, type ReactNode } from 'react';
-import { DEFAULT_NODES, findCode, type CodeSet, type Mode, type Team } from './config';
+import { DEFAULT_NODES, findCode, routeFor, type CodeSet, type Mode, type Period, type Stop, type Team } from './config';
 
 // Estado da missão em memória. A persistência entra na fase "Sistema de Bitcoins".
 
 export type Block = { index: number; at: number };
 
 /** Escolhas do recreador antes de entregar o celular. */
-export type Setup = { total: number; mode: Mode; team: Team };
+export type Setup = { total: number; mode: Mode; team: Team; period: Period };
 
 type State = {
   setup: Setup;
@@ -24,7 +24,7 @@ type Action =
   | { type: 'reset' };
 
 const initial: State = {
-  setup: { total: DEFAULT_NODES, mode: 'solo', team: 'A' },
+  setup: { total: DEFAULT_NODES, mode: 'solo', team: 'A', period: 'dia' },
   startedAt: null,
   blocks: [],
   decrypted: [],
@@ -57,6 +57,9 @@ export type ScanResult =
 type Mission = State & {
   total: number;
   mode: Mode;
+  period: Period;
+  /** Paradas da missão; o bloco N fica em route[N-1]. */
+  route: Stop[];
   /** Conjunto de QR deste aparelho. */
   codeSet: CodeSet;
   started: boolean;
@@ -79,7 +82,8 @@ const MissionContext = createContext<Mission | null>(null);
 export function MissionProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initial);
 
-  const { total, mode, team } = state.setup;
+  const { total, mode, team, period } = state.setup;
+  const route = useMemo(() => routeFor(period, total), [period, total]);
   const codeSet: CodeSet = mode === 'versus' ? team : 'solo';
   const btc = state.blocks.length;
   const complete = btc >= total;
@@ -111,6 +115,8 @@ export function MissionProvider({ children }: { children: ReactNode }) {
       ...state,
       total,
       mode,
+      period,
+      route,
       codeSet,
       started: state.startedAt !== null,
       btc,
@@ -123,7 +129,7 @@ export function MissionProvider({ children }: { children: ReactNode }) {
       markDecrypted,
       reset,
     }),
-    [state, total, mode, codeSet, btc, nextIndex, complete, finishedAt, check, start, acquire, markDecrypted, reset],
+    [state, total, mode, period, route, codeSet, btc, nextIndex, complete, finishedAt, check, start, acquire, markDecrypted, reset],
   );
 
   return <MissionContext.Provider value={value}>{children}</MissionContext.Provider>;

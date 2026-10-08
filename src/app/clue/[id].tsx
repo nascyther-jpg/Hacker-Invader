@@ -18,8 +18,8 @@ import { color, space } from '../../theme/tokens';
 export default function Clue() {
   const { id: raw } = useLocalSearchParams<{ id: string }>();
   const id = Number(raw);
-  const { btc, total, complete, decrypted } = useMission();
-  const text = clueText(id, total);
+  const { btc, route, complete, decrypted } = useMission();
+  const text = clueText(id, route);
   const unlocked = text !== undefined && id <= btc;
   const back = () => (router.canGoBack() ? router.back() : router.replace('/home'));
 

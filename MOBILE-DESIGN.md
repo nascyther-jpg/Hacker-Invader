@@ -20,7 +20,7 @@ Stack único (Expo Router), sem tab bar: o app tem um destino central (a carteir
 ```
 src/app/
   index        Boot (2,3 s, toque pula) -> replace /setup (sem missão) ou /home
-  setup        Configuração do recreador: modo, time, número de pistas
+  setup        Configuração do recreador: período, modo, time, número de pistas
   home         Carteira + progresso + pista atual
   scan         Scanner (fullScreenModal) -> replace /verify
   verify       Verificação: válido / inválido / protegido / repetido / outro time
@@ -72,5 +72,6 @@ Com "reduzir movimento" ligado, tudo vira instantâneo.
 - QR repetido mostra "Bloco já recuperado" e leva à pista.
 - Recreador zera a missão segurando a carteira na Home por 2 s e volta à configuração.
 - Conteúdo (códigos, lugares e charadas) fica em `src/game/config.ts`.
-- Número de pistas: 1 a 10 (padrão 4). O bloco N fica no lugar N; a pista N leva ao lugar N+1.
+- Número de pistas: 1 a 10 (padrão 4), limitado aos lugares permitidos no período. O bloco N fica na parada N da rota; a pista N leva à parada N+1.
+- Período Dia/Noite: locais do Mavsa Resort com classificação em `docs/locais-mavsa.md`. À noite, só áreas iluminadas, cobertas ou com equipe. As folhas de QR não trazem o lugar (ele muda com o período).
 - Hacker vs Hacker: Time Amarelo (QR `BLACKNODE-Axx`) e Time Ciano (`BLACKNODE-Bxx`), mesma rota. QR de outro conjunto mostra "Bloco de outro time". Cronômetro do início até o último bloco; o recreador compara os tempos dos dois celulares.

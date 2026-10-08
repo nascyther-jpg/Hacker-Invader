@@ -15,54 +15,148 @@ export const TEAMS: Record<Team, { name: string; short: string }> = {
   B: { name: 'Time Ciano', short: 'Ciano' },
 };
 
+/** Período da caça: muda os lugares permitidos. */
+export type Period = 'dia' | 'noite';
+
+export const PERIODS: Record<Period, { name: string; description: string }> = {
+  dia: { name: 'Dia', description: 'Resort inteiro, com piscinas e áreas externas.' },
+  noite: { name: 'Noite', description: 'Só áreas iluminadas, cobertas ou com equipe do hotel.' },
+};
+
+export type Place = {
+  name: string;
+  /** Onde fica o bloco, por período. Ausente = lugar proibido nesse período. */
+  dia?: string;
+  noite?: string;
+  /** Charada que leva até o lugar. `hintNoite` substitui `hint` à noite. */
+  hint: string;
+  hintNoite?: string;
+};
+
 /**
- * Lugares da rota, em ordem. O recreador esconde o bloco N no lugar N.
- * `hint` é a charada que leva até esse lugar: a do lugar 1 abre a missão,
- * a do lugar N+1 é liberada ao recuperar o bloco N.
- * No modo Hacker vs Hacker os dois times fazem a mesma rota, cada um com seus QR.
+ * Locais do Mavsa Resort na ordem da rota (caminhada contínua).
+ * A classificação Dia/Noite foi proposta pelo app e está em auditoria pelo recreador:
+ * veja docs/locais-mavsa.md antes de mudar.
  */
-export const PLACES: { name: string; hint: string }[] = [
+export const PLACES: Place[] = [
   {
-    name: 'Quadro de atividades',
-    hint: 'O primeiro bloco está escondido onde todo mundo se encontra antes de cada aventura. Procure perto do quadro de atividades.',
+    name: 'Check-in',
+    dia: 'No balcão do check-in, à vista da recepção.',
+    noite: 'No balcão do check-in, à vista da recepção.',
+    hint: 'Toda família que chega ao resort passa primeiro por aqui para pegar a chave. Procure perto do balcão.',
   },
   {
-    name: 'Escada da piscina funda',
-    hint: 'Agora siga até onde a água é mais funda e ninguém pode correr. O próximo bloco espera perto da escada.',
+    name: 'Lobby do hotel',
+    dia: 'No lobby, perto dos sofás.',
+    noite: 'No lobby, perto dos sofás.',
+    hint: 'Agora vá até a grande sala de entrada do hotel, onde os hóspedes esperam sentados nos sofás.',
   },
   {
-    name: 'Toalhas',
-    hint: 'Procure o lugar onde se guarda o que faz a gente ficar seco depois do mergulho.',
+    name: 'Escadaria do Lobby',
+    dia: 'No pé da escadaria, nunca nos degraus.',
+    hint: 'O próximo bloco está onde se sobe e se desce a partir do lobby. Fica lá embaixo, nada de procurar nos degraus.',
   },
   {
-    name: 'Entrada do restaurante',
-    hint: 'O próximo bloco está onde a comida chega quentinha. Olhe com atenção perto da entrada.',
+    name: 'Apartamentos Grand Étoile e Première',
+    dia: 'Na área de fora dos prédios, longe das portas dos quartos.',
+    hint: 'Procure perto dos prédios onde as famílias dormem: uma estrela grande e o primeiro de todos. Fale baixinho!',
   },
   {
-    name: 'Parquinho',
-    hint: 'Vá até onde se sobe, se escorrega e se balança. O bloco está escondido perto do escorregador.',
+    name: "Restaurante Lac d'Or",
+    dia: 'Do lado de fora da entrada, sem entrar no salão.',
+    noite: 'Do lado de fora da entrada, sem entrar no salão.',
+    hint: 'Siga até o lago de ouro onde a comida chega quentinha. O bloco espera do lado de fora da porta.',
   },
   {
-    name: 'Recepção',
-    hint: 'Todo hóspede passa por aqui quando chega e quando vai embora. Procure perto do balcão.',
+    name: 'Mavsa Hall',
+    dia: 'Na fachada, do lado de fora. De dia não se entra.',
+    noite: 'Na entrada, fora do horário do espetáculo. Nunca dentro durante o show.',
+    hint: 'Vá até o palco das grandes atrações. As portas estão fechadas: o bloco está do lado de fora.',
+    hintNoite: 'Vá até o palco das grandes atrações da noite. O bloco espera na entrada, antes das cortinas abrirem.',
   },
   {
-    name: 'Quadra de esportes',
-    hint: 'Aqui a bola rola e o time grita gol. O bloco espera atrás da trave.',
+    name: 'Gira-gira de Cupcake (CDS)',
+    dia: 'Perto do gira-gira, com ele parado.',
+    noite: 'Perto do gira-gira, com ele parado.',
+    hint: 'Vá até a Cidade dos Sonhos e procure o docinho gigante que gira sem parar.',
   },
   {
-    name: 'Sala de jogos',
-    hint: 'Procure onde tem mesa de pingue-pongue e muita gente jogando. O bloco está perto da porta.',
+    name: 'Árvore mágica (CDS)',
+    dia: 'Junto da árvore mágica.',
+    noite: 'Junto da árvore mágica.',
+    hint: 'Na Cidade dos Sonhos existe uma árvore que nenhum jardineiro plantou. Dizem que ela é mágica.',
   },
   {
-    name: 'Redário',
-    hint: 'Vá até o lugar onde as redes balançam e todo mundo descansa na sombra.',
+    name: 'Brinquedoteca do navio pirata (CDS)',
+    dia: 'Perto do navio pirata, fora do alto do brinquedo.',
+    noite: 'Perto do navio pirata, fora do alto do brinquedo.',
+    hint: 'Na Cidade dos Sonhos, piratas guardam tesouros no navio. Procure perto do navio, sem subir nele.',
   },
   {
-    name: 'Espaço kids',
-    hint: 'O último esconderijo é a casa da recreação. Procure perto da entrada do espaço kids.',
+    name: 'Arcade (CDS)',
+    dia: 'No balcão do check-in infantil.',
+    noite: 'No balcão do check-in infantil.',
+    hint: 'Agora siga as luzes piscando e o barulho dos jogos. O bloco está no balcão onde as crianças fazem o check-in.',
+  },
+  {
+    name: 'Bilhar e ping-pong (CDS)',
+    dia: 'Embaixo da mesa de ping-pong ou num canto da sala, longe dos tacos.',
+    noite: 'Embaixo da mesa de ping-pong ou num canto da sala, longe dos tacos.',
+    hint: 'Na Cidade dos Sonhos tem uma sala onde as bolinhas batem na mesa: uma pula, as outras rolam até a caçapa.',
+  },
+  {
+    name: 'Jacaré de Pedra',
+    dia: 'Dentro ou do lado do jacaré, sempre à vista do recreador.',
+    hint: 'Desça pela frente da Cidade dos Sonhos. Um bicho gigante de pedra está de boca aberta esperando vocês.',
+  },
+  {
+    name: 'Pegasus e a carruagem de abóbora',
+    dia: 'Na carruagem, onde fazemos piquenique.',
+    hint: 'Na frente do jacaré de pedra, um cavalo com asas puxa uma carruagem feita de abóbora.',
+  },
+  {
+    name: "Piscina espelho d'água",
+    dia: 'Fora do piso molhado, longe da borda. Só com a piscina aberta e guarda-vidas.',
+    hint: 'Procure a piscina que parece um espelho. Atenção, hacker: perto da água ninguém corre!',
+  },
+  {
+    name: 'Piscina aquecida',
+    dia: 'Fora do piso molhado, longe da borda. Só com a piscina aberta e guarda-vidas.',
+    hint: 'Agora vá até a piscina de água quentinha. Ande devagar: o bloco está longe da borda.',
+  },
+  {
+    name: 'Toboágua',
+    dia: 'Fora da área do brinquedo, nunca na escada. Só com o toboágua funcionando e guarda-vidas.',
+    hint: 'O bloco está perto de onde a gente desce escorregando até cair na água. Ande, não corra!',
   },
 ];
+
+/** Lugares permitidos no período, na ordem da rota. */
+export function placesFor(period: Period): Place[] {
+  return PLACES.filter((p) => p[period] !== undefined);
+}
+
+/** Máximo de pistas no período: o menor entre MAX_NODES e os lugares permitidos. */
+export function maxNodesFor(period: Period): number {
+  return Math.min(MAX_NODES, placesFor(period).length);
+}
+
+export type Stop = { name: string; where: string; hint: string };
+
+/**
+ * Rota da missão: `total` lugares permitidos no período, espalhados pela rota inteira
+ * e mantendo a ordem. O bloco N fica na parada N.
+ */
+export function routeFor(period: Period, total: number): Stop[] {
+  const all = placesFor(period);
+  const n = Math.max(0, Math.min(total, all.length));
+  const picked = Array.from({ length: n }, (_, i) => all[n === 1 ? 0 : Math.round((i * (all.length - 1)) / (n - 1))]);
+  return picked.map((p) => ({
+    name: p.name,
+    where: p[period] as string,
+    hint: (period === 'noite' && p.hintNoite) || p.hint,
+  }));
+}
 
 /** Códigos dos QR por conjunto, do bloco 1 ao 10. */
 const CODES: Record<CodeSet, string[]> = {
@@ -125,12 +219,11 @@ export function finalMessage(mode: Mode): string {
 }
 
 /**
- * Pistas numeradas de 0 a total-1. A pista 0 é a de abertura; a pista N vem do bloco N.
+ * Pistas numeradas de 0 a total-1, vindas da rota. A pista 0 é a de abertura; a pista N vem do bloco N.
  * O último bloco não tem pista: leva direto à tela de missão completa.
  */
-export function clueText(id: number, total: number): string | undefined {
-  if (id < 0 || id >= total) return undefined;
-  return PLACES[id]?.hint;
+export function clueText(id: number, route: Stop[]): string | undefined {
+  return route[id]?.hint;
 }
 
 /** "Hash" fictício e estável do bloco, só para exibição. */
