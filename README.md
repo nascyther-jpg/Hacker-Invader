@@ -11,6 +11,18 @@ npx expo start
 
 O scanner usa `expo-camera`. Para testar sem câmera, use "Digitar código" na tela do scanner.
 
+## Instalar o APK no Android
+
+A cada push na `main`, o GitHub Actions gera o APK (workflow `APK Android`) e publica num Release.
+Link fixo da versão mais recente:
+https://github.com/nascyther-jpg/Hacker-Invader/releases/latest/download/black-node.apk
+
+1. Abra o link no navegador do celular e baixe.
+2. Toque no arquivo; se pedir, permita "instalar apps desconhecidos" para o navegador.
+3. Para atualizar, baixe de novo e instale por cima (o progresso não é mantido entre aberturas).
+
+Para gerar sem push: aba Actions > APK Android > Run workflow.
+
 ## Modos de jogo
 
 Antes de entregar o celular, o recreador escolhe na tela de configuração:
