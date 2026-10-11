@@ -297,6 +297,7 @@ function Verifying({ code }: { code: string }) {
 }
 
 function Acquired({ index, total, story }: { index: number; total: number; story: boolean }) {
+  const { snape } = useMission();
   const last = index >= total;
   // Roteiro: na metade dos blocos o hacker toma a tela sozinho.
   const invaded = story && !last && index === storyMidpoint(total);
@@ -316,7 +317,14 @@ function Acquired({ index, total, story }: { index: number; total: number; story
           <Button
             label="Abrir carteira"
             icon="lock-open-variant-outline"
-            onPress={() => (story ? hack('final') : router.replace('/complete'))}
+            // Final do Snape: a revelação acontece no Zap, com a charada do apelido hacker.
+            onPress={() =>
+              snape
+                ? router.replace({ pathname: '/zap/[chat]', params: { chat: 'hacker' } })
+                : story
+                  ? hack('final')
+                  : router.replace('/complete')
+            }
           />
         ) : (
           <Button

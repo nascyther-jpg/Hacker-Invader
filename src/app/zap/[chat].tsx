@@ -7,6 +7,7 @@ import { zap, zapType } from '../../theme/zap';
 import { Avatar, Bubble, SystemNote, TypingBubble } from '../../zap/Bubbles';
 import { DECOYS, HACKER_NUMBER, HACKER_PUSHNAME, type Part, type Reply } from '../../zap/script';
 import { useZap } from '../../zap/store';
+import type { VideoId } from '../../zap/videos';
 
 // Conversa do Zap. No chat do hacker o recreador responde tocando numa sugestão:
 // ela aparece no campo de texto e vai com o botão de enviar.
@@ -71,7 +72,8 @@ function HackerChat() {
       highlight={typing}
       items={items}
       onMenu={menu}
-      onLink={() => router.push('/zap/invasao')}
+      onLink={(to) => (to === 'acesso' ? router.push('/zap/invasao') : router.replace('/complete'))}
+      onVideo={(id) => router.push({ pathname: '/zap/video/[id]', params: { id } })}
       footer={
         <>
           {replies.length ? (
@@ -140,6 +142,7 @@ function ChatFrame({
   footer,
   onMenu,
   onLink,
+  onVideo,
 }: {
   name: string;
   subtitle: string;
@@ -148,7 +151,8 @@ function ChatFrame({
   items: Item[];
   footer: React.ReactNode;
   onMenu?: () => void;
-  onLink?: () => void;
+  onLink?: (to: 'acesso' | 'carteira') => void;
+  onVideo?: (id: VideoId) => void;
 }) {
   const insets = useSafeAreaInsets();
   return (
@@ -197,6 +201,7 @@ function ChatFrame({
                   read={item.read}
                   from={item.from}
                   onLink={onLink}
+                  onVideo={onVideo}
                 />
               );
             case 'typing':

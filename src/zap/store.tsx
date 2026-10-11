@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react';
-import { FIRST_STEP, SCRIPT, typingMs, type Part, type Reply, type StepId } from './script';
+import { FIRST_STEP, SCRIPT, typingMs, type Part, type Reply, type Step, type StepId } from './script';
 
 // Estado do Zap em memória. A conversa anda sozinha mesmo com o chat fechado
 // (a lista mostra "digitando..."), como num celular de verdade.
@@ -11,11 +11,17 @@ type State = {
   step: StepId;
   /** Falas do hacker ainda por chegar, em ordem. */
   pending: Part[];
+  /** Respostas que aparecem quando o hacker termina de falar. */
+  replies: Reply[];
+  /** Blocos da missão atual que já renderam mensagem do hacker. */
+  checkpoints: number[];
   typing: boolean;
   /** Quantas mensagens o recreador já viu (para o contador de não lidas). */
   seen: number;
   /** O link foi aberto: o BLACK NODE está liberado. */
   unlocked: boolean;
+  /** Tamanho da conversa quando o BLACK NODE abriu: só o que vem depois vira notificação. */
+  unlockedAt: number;
   nextId: number;
 };
 
@@ -23,6 +29,8 @@ type Action =
   | { type: 'typing' }
   | { type: 'deliver'; at: number }
   | { type: 'reply'; reply: Reply; at: number }
+  | { type: 'checkpoint'; index: number; step: Step }
+  | { type: 'newMission' }
   | { type: 'seen' }
   | { type: 'unlock' }
   | { type: 'restart'; at: number };
@@ -30,7 +38,18 @@ type Action =
 function opening(at: number): State {
   // As duas primeiras falas já chegaram quando o app abre.
   const thread = SCRIPT[FIRST_STEP].hacker.map((part, i) => ({ id: i, at: at - (2 - i) * 60_000, mine: false, part }));
-  return { thread, step: FIRST_STEP, pending: [], typing: false, seen: 0, unlocked: false, nextId: thread.length };
+  return {
+    thread,
+    step: FIRST_STEP,
+    pending: [],
+    replies: SCRIPT[FIRST_STEP].replies,
+    checkpoints: [],
+    typing: false,
+    seen: 0,
+    unlocked: false,
+    unlockedAt: 0,
+    nextId: thread.length,
+  };
 }
 
 function reducer(state: State, action: Action): State {
@@ -51,15 +70,41 @@ function reducer(state: State, action: Action): State {
         thread: [...state.thread, msg],
         step: action.reply.next,
         pending: SCRIPT[action.reply.next].hacker,
+        replies: SCRIPT[action.reply.next].replies,
         nextId: state.nextId + 1,
       };
     }
+    case 'checkpoint':
+      if (state.checkpoints.includes(action.index)) return state;
+      return {
+        ...state,
+        checkpoints: [...state.checkpoints, action.index],
+        pending: [...state.pending, ...action.step.hacker],
+        replies: action.step.replies,
+      };
+    case 'newMission':
+      // A charada do Snape da missão anterior não vale mais.
+      return {
+        ...state,
+        checkpoints: [],
+        pending: [],
+        typing: false,
+        step: state.step.startsWith('snape') ? 'convite' : state.step,
+        replies: state.step.startsWith('snape') ? [] : state.replies,
+      };
     case 'seen':
       return state.seen === state.thread.length ? state : { ...state, seen: state.thread.length };
     case 'unlock':
-      return { ...state, unlocked: true };
-    case 'restart':
-      return { ...opening(action.at), unlocked: state.unlocked };
+      return state.unlocked ? state : { ...state, unlocked: true, unlockedAt: state.thread.length };
+    case 'restart': {
+      const fresh = opening(action.at);
+      return {
+        ...fresh,
+        unlocked: state.unlocked,
+        unlockedAt: state.unlocked ? fresh.thread.length : 0,
+        checkpoints: state.checkpoints,
+      };
+    }
   }
 }
 
@@ -70,6 +115,10 @@ type Zap = State & {
   /** O hacker já mandou o link. */
   invited: boolean;
   reply: (reply: Reply) => void;
+  /** O hacker manda a mensagem do bloco `index` (uma vez por missão). */
+  sendCheckpoint: (index: number, step: Step) => void;
+  /** Missão nova no BLACK NODE: as mensagens por bloco voltam a valer. */
+  newMission: () => void;
   markSeen: () => void;
   unlock: () => void;
   restart: () => void;
@@ -93,18 +142,20 @@ export function ZapProvider({ children }: { children: ReactNode }) {
   }, [state.pending, state.typing]);
 
   const busy = state.pending.length > 0 || state.typing;
-  const replies = busy ? NO_REPLIES : SCRIPT[state.step].replies;
+  const replies = busy ? NO_REPLIES : state.replies;
   const unread = state.thread.slice(state.seen).filter((m) => !m.mine).length;
   const invited = state.thread.some((m) => m.part.kind === 'link');
 
   const reply = useCallback((r: Reply) => dispatch({ type: 'reply', reply: r, at: Date.now() }), []);
+  const sendCheckpoint = useCallback((index: number, step: Step) => dispatch({ type: 'checkpoint', index, step }), []);
+  const newMission = useCallback(() => dispatch({ type: 'newMission' }), []);
   const markSeen = useCallback(() => dispatch({ type: 'seen' }), []);
   const unlock = useCallback(() => dispatch({ type: 'unlock' }), []);
   const restart = useCallback(() => dispatch({ type: 'restart', at: Date.now() }), []);
 
   const value = useMemo<Zap>(
-    () => ({ ...state, replies, unread, invited, reply, markSeen, unlock, restart }),
-    [state, replies, unread, invited, reply, markSeen, unlock, restart],
+    () => ({ ...state, replies, unread, invited, reply, sendCheckpoint, newMission, markSeen, unlock, restart }),
+    [state, replies, unread, invited, reply, sendCheckpoint, newMission, markSeen, unlock, restart],
   );
 
   return <ZapContext.Provider value={value}>{children}</ZapContext.Provider>;
@@ -133,7 +184,9 @@ export function preview(part: Part): string {
       return `📄 ${part.name}`;
     case 'audio':
       return `🎤 0:${String(part.seconds).padStart(2, '0')}`;
+    case 'video':
+      return '🎥 Vídeo';
     case 'link':
-      return 'blacknode://acesso';
+      return `blacknode://${part.to}`;
   }
 }

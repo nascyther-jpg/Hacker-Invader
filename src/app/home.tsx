@@ -15,7 +15,7 @@ import { useMission } from '../game/store';
 import { color, glow, space, touch } from '../theme/tokens';
 
 export default function Home() {
-  const { btc, total, mode, route, started, complete, decrypted, reset, story, unmasked } = useMission();
+  const { btc, total, mode, route, started, complete, decrypted, reset, story, snape, unmasked } = useMission();
   const missing = total - btc;
   // Roteiro: depois da meta ainda falta desmascarar o hacker (pista extra + crachá do tio).
   const hunting = story && complete && !unmasked;
@@ -45,7 +45,13 @@ export default function Home() {
       right={{ icon: 'history', label: 'Histórico de blocos', onPress: () => router.push('/history') }}
       scroll
       footer={
-        hunting ? (
+        hunting && snape ? (
+          <Button
+            label="Abrir o Zap"
+            icon="message-text-outline"
+            onPress={() => router.push({ pathname: '/zap/[chat]', params: { chat: 'hacker' } })}
+          />
+        ) : hunting ? (
           <Button label="Escanear o crachá" icon="qrcode-scan" onPress={() => router.push('/scan')} />
         ) : complete ? (
           <Button label="Ver missão completa" icon="flag-checkered" onPress={() => router.push('/complete')} />
@@ -70,7 +76,9 @@ export default function Home() {
           />
           <BtcAmount value={btc} tone={btc > 0 ? color.primary : color.text} millions={story} />
           <Txt variant="body" tone={color.muted}>
-            {hunting
+            {hunting && snape
+              ? 'Meta batida! O hacker mandou uma charada no Zap.'
+              : hunting
               ? 'Meta batida! Siga a pista extra e encontre o hacker.'
               : complete
               ? 'Você recuperou todos os blocos.'
@@ -99,7 +107,7 @@ export default function Home() {
         <NodeTrack done={btc} total={total} size="lg" />
       </View>
 
-      {!complete || hunting ? (
+      {!complete || (hunting && !snape) ? (
         <PressableScale
           onPress={() => router.push({ pathname: '/clue/[id]', params: { id: String(clueId) } })}
           accessibilityRole="button"

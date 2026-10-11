@@ -14,7 +14,7 @@ import { useMission } from '../game/store';
 import { color, space } from '../theme/tokens';
 
 export default function Complete() {
-  const { blocks, complete, total, mode, setup, startedAt, finishedAt: blocksAt, story, unmasked, unmaskedAt } = useMission();
+  const { blocks, complete, total, mode, setup, startedAt, finishedAt: blocksAt, story, snape, unmasked, unmaskedAt } = useMission();
   const versus = mode === 'versus';
   const home = () => router.replace('/home');
   // No roteiro, a missão só acaba quando o hacker é desmascarado.
@@ -70,7 +70,7 @@ export default function Complete() {
         <NodeTrack done={total} total={total} />
 
         <Txt variant="body" center>
-          {finalMessage(mode, story)}
+          {finalMessage(mode, story, snape)}
         </Txt>
 
         <Chamfer cut="sm" fill={color.surface} stroke={color.line} style={styles.seal}>
