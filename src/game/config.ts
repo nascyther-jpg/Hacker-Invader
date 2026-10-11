@@ -315,12 +315,6 @@ export const EXTRA_CLUE =
 
 // ---------- Mensagens do hacker no Zap durante a caça ----------
 
-/** Blocos depois dos quais o hacker manda vídeo no Zap: a cada 3 e sempre no último. */
-export function zapCheckpoints(total: number): number[] {
-  const list = Array.from({ length: Math.floor(total / 3) }, (_, i) => (i + 1) * 3);
-  return list[list.length - 1] === total ? list : [...list, total];
-}
-
 /** Nome de recreador de quem joga junto no final alternativo. */
 export const RECREADOR_NOME = 'Snape';
 /** Apelido hacker que as crianças descobrem pela charada (Snape = Príncipe Mestiço, de Harry Potter). */

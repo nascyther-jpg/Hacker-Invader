@@ -112,11 +112,24 @@ export const SCRIPT: Record<StepId, Step> = {
 export const CHARADA_SNAPE =
   'Sou mestre das poções e escrevi meus segredos nas margens de um livro velho. Meu sangue é metade bruxo, metade trouxa, mas meu título é de realeza. E se perguntarem até quando vou guardar esse segredo... Sempre.';
 
+/** Provocações curtas nos blocos sem vídeo, em rodízio. */
+export const TAUNTS = [
+  'Estou de olho em vocês, mais do que vocês imaginam... 👁️',
+  'Achei fofo vocês acharem esse bloco. Foi sorte 😏',
+  'Olhem para trás. Viram alguém? Eu vi vocês 👀',
+  'Cada pista que vocês leem, eu leio primeiro.',
+  'As câmeras do resort estão comigo. Sorriam 📸',
+  'Tic-tac... o relógio não para ⏳',
+  'Vocês são rápidos... mas eu sou mais 💻',
+];
+
 /**
- * Mensagem do hacker depois do bloco `index` (a cada 3 blocos e no último).
+ * Mensagem do hacker depois do bloco `index`: vídeo a cada 3 blocos e no último,
+ * provocação nos outros.
  * No último bloco com o Snape jogando junto, vem a charada e as respostas.
  */
 export function checkpoint(index: number, total: number, snape: boolean): Step {
+  if (index < total && index % 3 !== 0) return { hacker: [t(TAUNTS[(index - 1) % TAUNTS.length])], replies: [] };
   if (index >= total && snape)
     return {
       hacker: [

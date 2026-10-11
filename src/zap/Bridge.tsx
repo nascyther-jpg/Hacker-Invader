@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { SlideInUp, SlideOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { zapCheckpoints } from '../game/config';
 import { useMission } from '../game/store';
 import { zap, zapType } from '../theme/zap';
 import { Avatar } from './Bubbles';
 import { HACKER_NUMBER, checkpoint } from './script';
 import { preview, useZap } from './store';
 
-// Liga o BLACK NODE ao Zap: a cada 3 blocos (e no último) o hacker manda mensagem com vídeo,
+// Liga o BLACK NODE ao Zap: a cada bloco o hacker manda mensagem (vídeo a cada 3 e no último,
+// provocação nos outros),
 // e uma notificação aparece no topo enquanto o recreador está no BLACK NODE.
 
 export function ZapBridge() {
@@ -25,8 +25,8 @@ export function ZapBridge() {
 
   useEffect(() => {
     if (!story || startedAt === null) return;
-    for (const i of zapCheckpoints(total)) {
-      if (btc >= i && !checkpoints.includes(i)) sendCheckpoint(i, checkpoint(i, total, snape));
+    for (let i = 1; i <= Math.min(btc, total); i++) {
+      if (!checkpoints.includes(i)) sendCheckpoint(i, checkpoint(i, total, snape));
     }
   }, [btc, total, story, snape, startedAt, checkpoints, sendCheckpoint]);
 
