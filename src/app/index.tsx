@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
@@ -9,12 +9,19 @@ import { Screen } from '../components/Screen';
 import { Txt } from '../components/Txt';
 import { useMission } from '../game/store';
 import { color, space } from '../theme/tokens';
+import { useZap } from '../zap/store';
 
 // Boot: três linhas de sistema e entra na base. Toque pula.
 const LINES = ['Conectando ao nó secreto', 'Canal protegido', 'Agente identificado'];
 const STEP = 520;
 
-export default function Boot() {
+// Antes do BLACK NODE vem o Zap: o recreador conversa com o hacker e abre o link.
+export default function Entry() {
+  const { unlocked } = useZap();
+  return unlocked ? <Boot /> : <Redirect href="/zap" />;
+}
+
+function Boot() {
   const reduced = useReducedMotion();
   const [step, setStep] = useState(0);
   const { started } = useMission();
