@@ -19,7 +19,10 @@ Stack único (Expo Router), sem tab bar: o app tem um destino central (a carteir
 
 ```
 src/app/
-  index        Boot (2,3 s, toque pula) -> replace /setup (sem missão) ou /home
+  index        Sem o link aberto -> /zap. Depois: boot (2,3 s, toque pula) -> /setup ou /home
+  zap/index    Zap: lista de conversas (clone de mensageiro). Segurar "Zap" 2 s pula para o BLACK NODE
+  zap/[chat]   Conversa. "hacker" = roteiro interativo (src/zap/script.ts); as outras são fachada
+  zap/invasao  O link do hacker "instala" o BLACK NODE e abre o boot
   setup        Configuração do recreador: período, modo, time, número de pistas
   home         Carteira + progresso + pista atual
   scan         Scanner (fullScreenModal) -> replace /verify
@@ -29,6 +32,10 @@ src/app/
   complete     Missão completa
   hack/[stage] Invasão do hacker (roteiro): inicio, meio (imagem carregando), final (voz do tio)
 ```
+
+## Zap (antes do BLACK NODE)
+
+O Zap imita de propósito o tema escuro de um mensageiro comum, sem nome nem logo oficiais. Tem tokens próprios em `src/theme/zap.ts` e fonte do sistema; as regras de cor, fonte e chanfro abaixo valem só para o BLACK NODE. A única marca do BLACK NODE dentro do Zap é a prévia do link de convite.
 
 ## Tokens (`src/theme`)
 
