@@ -3,14 +3,16 @@ import { color, space } from '../theme/tokens';
 import { Txt } from './Txt';
 
 // Número principal da carteira. Algarismos em display, unidade em mono.
-export function BtcAmount({ value, tone = color.text }: { value: number; tone?: string }) {
+// `millions`: no roteiro do hacker cada bloco vale 1 milhão ("6 MI BTC").
+export function BtcAmount({ value, tone = color.text, millions }: { value: number; tone?: string; millions?: boolean }) {
+  const label = millions ? `${value} ${value === 1 ? 'milhão' : 'milhões'} de BTC` : `${value} BTC`;
   return (
-    <View style={styles.row} accessible accessibilityLabel={`${value} BTC`}>
+    <View style={styles.row} accessible accessibilityLabel={label}>
       <Txt variant="hero" tone={tone}>
         {value}
       </Txt>
       <Txt variant="title" tone={color.muted} style={styles.unit}>
-        BTC
+        {millions ? 'MI BTC' : 'BTC'}
       </Txt>
     </View>
   );

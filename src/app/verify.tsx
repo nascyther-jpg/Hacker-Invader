@@ -21,13 +21,15 @@ import { Screen } from '../components/Screen';
 import { Signal } from '../components/Signal';
 import { StatusTag } from '../components/StatusTag';
 import { Txt } from '../components/Txt';
-import { TEAMS, blockHash, pad2 } from '../game/config';
+import { TEAMS, blockHash, millions, pad2, storyMidpoint } from '../game/config';
 import { useMission, type ScanResult } from '../game/store';
 import { color, space } from '../theme/tokens';
 
 // QR válido:   VERIFICANDO -> BLOCO VERIFICADO -> +1 BTC (carteira e progresso atualizam) -> pista
 // QR inválido: VERIFICANDO -> BLOCO NÃO RECONHECIDO -> tentar de novo
 // QR do outro time: VERIFICANDO -> BLOCO DE OUTRO TIME -> tentar de novo
+// Roteiro do hacker: +1 milhão; na metade o hacker invade; no último bloco, a revelação.
+// Crachá do tio: VERIFICANDO -> CRACHÁ VERIFICADO -> HACKER DESMASCARADO
 
 type Phase = 'verifying' | 'verified' | 'acquired';
 
@@ -36,7 +38,7 @@ const VERIFIED_MS = 1000;
 
 export default function Verify() {
   const { code = '' } = useLocalSearchParams<{ code: string }>();
-  const { check, acquire, total } = useMission();
+  const { check, acquire, unmask, total, story } = useMission();
   // O resultado é congelado na chegada: o estado muda logo depois (acquire).
   const [result] = useState<ScanResult>(() => check(code));
   const [phase, setPhase] = useState<Phase>('verifying');
@@ -45,7 +47,7 @@ export default function Verify() {
   useEffect(() => {
     if (phase === 'verifying') {
       const t = setTimeout(
-        () => setPhase(result.kind === 'valid' ? 'verified' : 'acquired'),
+        () => setPhase(result.kind === 'valid' || result.kind === 'hacker' ? 'verified' : 'acquired'),
         reduced ? 400 : VERIFY_MS,
       );
       return () => clearTimeout(t);
@@ -60,7 +62,17 @@ export default function Verify() {
       );
       return () => clearTimeout(t);
     }
-  }, [phase, result, reduced, acquire]);
+    if (phase === 'verified' && result.kind === 'hacker') {
+      const t = setTimeout(
+        () => {
+          unmask();
+          setPhase('acquired');
+        },
+        reduced ? 500 : VERIFIED_MS,
+      );
+      return () => clearTimeout(t);
+    }
+  }, [phase, result, reduced, acquire, unmask]);
 
   const retry = () => router.replace('/scan');
   const home = () => router.replace('/home');
@@ -79,7 +91,54 @@ export default function Verify() {
         </ResultScreen>
       );
     }
-    return <Acquired index={result.index} total={total} />;
+    return <Acquired index={result.index} total={total} story={story} />;
+  }
+
+  if (result.kind === 'hacker') {
+    if (phase === 'verified') {
+      return (
+        <ResultScreen key="badge">
+          <Signal icon="card-account-details-outline" tone="primary" />
+          <Heading tag="Crachá" title="Crachá verificado" tone="primary" />
+        </ResultScreen>
+      );
+    }
+    return (
+      <ResultScreen
+        key="unmasked"
+        footer={<Button label="Abrir carteira" icon="lock-open-variant-outline" onPress={() => router.replace('/complete')} />}
+      >
+        <Signal icon="incognito-off" tone="primary" glowing />
+        <View style={styles.heading}>
+          <GlitchText tone={color.primary} center>
+            Hacker desmascarado
+          </GlitchText>
+          <Txt variant="body" tone={color.muted} center>
+            Era o tio o tempo todo!
+          </Txt>
+        </View>
+      </ResultScreen>
+    );
+  }
+
+  if (result.kind === 'hackerEarly') {
+    return (
+      <ResultScreen
+        key="early"
+        footer={
+          <>
+            <Button label="Escanear outro" icon="qrcode-scan" onPress={retry} />
+            <Button label="Voltar à base" variant="secondary" onPress={home} />
+          </>
+        }
+      >
+        <Signal icon="incognito" tone="danger" enter="shake" />
+        <Heading tag="Crachá do hacker" title="Ainda não" tone="danger" icon="close-octagon-outline" />
+        <Txt variant="body" tone={color.muted} center>
+          Primeiro batam a meta de {millions(total)} de BTC.
+        </Txt>
+      </ResultScreen>
+    );
   }
 
   if (result.kind === 'duplicate') {
@@ -94,7 +153,7 @@ export default function Verify() {
               icon={last ? 'lock-open-variant-outline' : 'arrow-right'}
               onPress={() =>
                 last
-                  ? router.replace('/complete')
+                  ? router.replace(story ? '/home' : '/complete')
                   : router.replace({ pathname: '/clue/[id]', params: { id: String(result.index) } })
               }
             />
@@ -237,19 +296,35 @@ function Verifying({ code }: { code: string }) {
   );
 }
 
-function Acquired({ index, total }: { index: number; total: number }) {
+function Acquired({ index, total, story }: { index: number; total: number; story: boolean }) {
   const last = index >= total;
+  // Roteiro: na metade dos blocos o hacker toma a tela sozinho.
+  const invaded = story && !last && index === storyMidpoint(total);
+  const hack = (stage: 'meio' | 'final') => router.replace({ pathname: '/hack/[stage]', params: { stage } });
+
+  useEffect(() => {
+    if (!invaded) return;
+    const t = setTimeout(() => hack('meio'), 2600);
+    return () => clearTimeout(t);
+  }, [invaded]);
+
   return (
     <Screen
       centered
       footer={
         last ? (
-          <Button label="Abrir carteira" icon="lock-open-variant-outline" onPress={() => router.replace('/complete')} />
+          <Button
+            label="Abrir carteira"
+            icon="lock-open-variant-outline"
+            onPress={() => (story ? hack('final') : router.replace('/complete'))}
+          />
         ) : (
           <Button
             label="Decifrar pista"
             icon="key-variant"
-            onPress={() => router.replace({ pathname: '/clue/[id]', params: { id: String(index) } })}
+            onPress={() =>
+              invaded ? hack('meio') : router.replace({ pathname: '/clue/[id]', params: { id: String(index) } })
+            }
           />
         )
       }
@@ -258,7 +333,7 @@ function Acquired({ index, total }: { index: number; total: number }) {
         <Signal icon="bitcoin" tone="primary" glowing />
         <View style={styles.heading}>
           <GlitchText tone={color.primary} center>
-            +1 BTC
+            {story ? '+1 milhão' : '+1 BTC'}
           </GlitchText>
           <Txt variant="body" tone={color.muted} center>
             {last ? 'Último bloco recuperado.' : 'Novo bloco na sua carteira.'}
@@ -269,7 +344,7 @@ function Acquired({ index, total }: { index: number; total: number }) {
           <Txt variant="label" tone={color.muted}>
             Carteira
           </Txt>
-          <WalletCount to={index} />
+          <WalletCount to={index} millions={story} />
           <NodeTrack done={index} total={total} highlight={index} />
         </Chamfer>
       </Animated.View>
@@ -278,7 +353,7 @@ function Acquired({ index, total }: { index: number; total: number }) {
 }
 
 // Atualização da carteira: mostra o saldo anterior e troca para o novo com um pop.
-function WalletCount({ to }: { to: number }) {
+function WalletCount({ to, millions: inMillions }: { to: number; millions: boolean }) {
   const reduced = useReducedMotion();
   const [value, setValue] = useState(reduced ? to : to - 1);
   useEffect(() => {
@@ -292,7 +367,7 @@ function WalletCount({ to }: { to: number }) {
       style={styles.count}
       entering={value === to && !reduced ? ZoomIn.springify().damping(12) : undefined}
     >
-      <BtcAmount value={value} tone={value === to ? color.primary : color.muted} />
+      <BtcAmount value={value} tone={value === to ? color.primary : color.muted} millions={inMillions} />
     </Animated.View>
   );
 }

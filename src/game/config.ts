@@ -8,7 +8,20 @@ export type CodeSet = 'solo' | Team;
 
 export const MIN_NODES = 1;
 export const MAX_NODES = 10;
-export const DEFAULT_NODES = 4;
+
+/**
+ * Roteiro do hacker (ideia da gestora do Mavsa): o hacker manda mensagem no início,
+ * invade o celular na metade ("imagem carregando") e no fim se revela com a voz do tio.
+ * Cada bloco vale 1 milhão de BTC e a meta é o total de blocos. Cronômetro regressivo.
+ */
+export const STORY = {
+  nodes: 6,
+  minutes: 60,
+  perBlock: 1_000_000,
+} as const;
+
+/** QR que o tio carrega no crachá: só vale depois da meta, no roteiro do hacker. */
+export const HACKER_CODE = 'BLACKNODE-HACKER-7X2Q';
 
 export const TEAMS: Record<Team, { name: string; short: string }> = {
   A: { name: 'Time Amarelo', short: 'Amarelo' },
@@ -213,7 +226,11 @@ export function findCode(raw: string): { set: CodeSet; index: number; code: stri
   return undefined;
 }
 
-export function finalMessage(mode: Mode): string {
+export function finalMessage(mode: Mode, story = false): string {
+  if (story)
+    return mode === 'versus'
+      ? 'O hacker era o tio o tempo todo! Mostre esta tela para ele: ganha o time que desmascarou o hacker primeiro.'
+      : 'O hacker era o tio o tempo todo! Mostre esta tela para ele e receba sua recompensa.';
   return mode === 'versus'
     ? 'Seu time recuperou a carteira inteira. Mostre esta tela para o recreador: ganha o time mais rápido.'
     : 'Você recuperou a carteira secreta inteira. Mostre esta tela para o recreador e receba sua recompensa.';
@@ -221,10 +238,11 @@ export function finalMessage(mode: Mode): string {
 
 /**
  * Pistas numeradas de 0 a total-1, vindas da rota. A pista 0 é a de abertura; a pista N vem do bloco N.
- * O último bloco não tem pista: leva direto à tela de missão completa.
+ * O último bloco não tem pista: leva direto à tela de missão completa (no roteiro, à revelação do hacker).
  */
-export function clueText(id: number, route: Stop[]): string | undefined {
-  return route[id]?.hint;
+export function clueText(id: number, route: Stop[], story = false): string | undefined {
+  // No roteiro, a pista `total` é a extra, que leva até o tio.
+  return route[id]?.hint ?? (story && id === route.length ? EXTRA_CLUE : undefined);
 }
 
 /** "Hash" fictício e estável do bloco, só para exibição. */
@@ -249,3 +267,46 @@ export function formatDuration(ms: number): string {
   const ss = s % 60;
   return h > 0 ? `${h}:${pad2(m)}:${pad2(ss)}` : `${pad2(m)}:${pad2(ss)}`;
 }
+
+// ---------- Roteiro do hacker ----------
+
+/** Bloco depois do qual o hacker invade de novo (3 em 6). Null com uma pista só. */
+export function storyMidpoint(total: number): number | null {
+  return total >= 2 ? Math.ceil(total / 2) : null;
+}
+
+/** "1 milhão" / "6 milhões" de BTC, pelo número de blocos. */
+export function millions(blocks: number): string {
+  return blocks === 1 ? '1 milhão' : `${blocks} milhões`;
+}
+
+export function durationText(minutes: number): string {
+  if (minutes === 60) return 'uma hora';
+  if (minutes % 60 === 0) return `${minutes / 60} horas`;
+  return `${minutes} minutos`;
+}
+
+export type HackStage = 'inicio' | 'meio' | 'final';
+
+export function hackerMessage(stage: HackStage, total: number): string {
+  switch (stage) {
+    case 'inicio':
+      return `Atenção, estou hackeando o servidor do Mavsa Resort! O dado mais confidencial está sob meus cuidados. Vocês terão ${durationText(STORY.minutes)} para encontrar ${millions(total)} de bitcoins na carteira... As pistas chegaram neste contato... O desafio começa AGORA! É COM VOCÊS!`;
+    case 'meio':
+      return 'O tempo de vocês está acabando. A imagem será liberada para toda a rede...';
+    case 'final':
+      return 'HAHAHA, vocês atingiram a meta... EI, PERAÍ! COMO ASSIM? É A MINHA VOZ!';
+  }
+}
+
+/** Mensagem que o tio manda no grupo de WhatsApp antes de começar. */
+export function whatsappMessage(total: number): string {
+  return `*BLACK NODE*\n\n${hackerMessage('inicio', total)}`;
+}
+
+/** Fala que o tio grava para tocar na revelação final. */
+export const VOICE_SCRIPT = 'HAHAHA, vocês atingiram a meta... Ei, peraí! Como assim? É a minha voz!';
+
+/** Pista extra, depois da meta: leva até o tio, que é o hacker. */
+export const EXTRA_CLUE =
+  'A voz não mente. O hacker conhece cada pista que vocês acharam, usa o uniforme do resort e comanda as brincadeiras. Encontrem quem organizou esta caça e escaneiem o crachá dele!';

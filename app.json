@@ -37,6 +37,13 @@
         }
       ],
       [
+        "expo-audio",
+        {
+          "microphonePermission": "O Black Node usa o microfone para gravar a voz do recreador no roteiro do hacker.",
+          "enableBackgroundPlayback": false
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#07080B",

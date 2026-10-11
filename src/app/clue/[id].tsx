@@ -18,15 +18,18 @@ import { color, space } from '../../theme/tokens';
 export default function Clue() {
   const { id: raw } = useLocalSearchParams<{ id: string }>();
   const id = Number(raw);
-  const { btc, route, complete, decrypted } = useMission();
-  const text = clueText(id, route);
+  const { btc, route, complete, decrypted, story, unmasked } = useMission();
+  const text = clueText(id, route, story);
   const unlocked = text !== undefined && id <= btc;
+  // Pista extra do roteiro: depois da meta, leva ao crachá do tio.
+  const extra = story && id === route.length;
+  const title = extra ? 'Pista extra' : `Pista do bloco ${pad2(id + 1)}`;
   const back = () => (router.canGoBack() ? router.back() : router.replace('/home'));
 
   if (!unlocked) {
     return (
       <Screen
-        title={`Pista do bloco ${pad2(id + 1)}`}
+        title={title}
         left={{ icon: 'chevron-left', label: 'Voltar', onPress: back }}
         centered
         footer={<Button label="Voltar à base" variant="secondary" onPress={() => router.replace('/home')} />}
@@ -47,9 +50,11 @@ export default function Clue() {
   return (
     <Reveal
       id={id}
+      title={title}
       text={text}
+      extra={extra}
       firstTime={!decrypted.includes(id)}
-      isCurrent={id === btc && !complete}
+      isCurrent={extra ? !unmasked : id === btc && !complete}
       onBack={back}
     />
   );
@@ -57,13 +62,17 @@ export default function Clue() {
 
 function Reveal({
   id,
+  title,
   text,
+  extra,
   firstTime,
   isCurrent,
   onBack,
 }: {
   id: number;
+  title: string;
   text: string;
+  extra: boolean;
   firstTime: boolean;
   isCurrent: boolean;
   onBack: () => void;
@@ -77,13 +86,13 @@ function Reveal({
 
   return (
     <Screen
-      title={`Pista do bloco ${pad2(id + 1)}`}
+      title={title}
       left={{ icon: 'chevron-left', label: 'Voltar', onPress: onBack }}
       scroll
       footer={
         isCurrent ? (
           <Button
-            label="Escanear bloco"
+            label={extra ? 'Escanear o crachá' : 'Escanear bloco'}
             icon="qrcode-scan"
             disabled={!done}
             // replace: a pista sai da pilha e o voltar depois do scan cai na base
@@ -119,7 +128,7 @@ function Reveal({
 
       {done && isCurrent ? (
         <Txt variant="body" tone={color.muted}>
-          Achou o lugar? Procure o código do bloco e escaneie.
+          {extra ? 'Achou o hacker? Escaneie o QR do crachá dele.' : 'Achou o lugar? Procure o código do bloco e escaneie.'}
         </Txt>
       ) : null}
     </Screen>
