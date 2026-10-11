@@ -134,7 +134,7 @@ export function checkpoint(index: number, total: number, snape: boolean): Step {
     return {
       hacker: [
         t('NÃO! A carteira inteira?! 😱'),
-        { kind: 'video', video: 'snape', seconds: 13 },
+        { kind: 'video', video: 'snape', seconds: 33 },
         t(CHARADA_SNAPE),
         t('Qual é o meu apelido hacker? Respondam AQUI. Se errarem, a carteira volta para mim 🐍'),
       ],
@@ -144,7 +144,7 @@ export function checkpoint(index: number, total: number, snape: boolean): Step {
     return {
       hacker: [
         t('NÃO! A carteira inteira?! 😱'),
-        { kind: 'video', video: 'final', seconds: 13 },
+        { kind: 'video', video: 'final', seconds: 14 },
         t('Vocês recuperaram os bitcoins... mas ainda não sabem quem eu sou 😈'),
         t('Sigam a pista extra no BLACK NODE. Se tiverem coragem.'),
       ],
@@ -154,7 +154,7 @@ export function checkpoint(index: number, total: number, snape: boolean): Step {
     return {
       hacker: [
         t('3 blocos?! Vocês acharam 3 blocos?! 😠'),
-        { kind: 'video', video: 'tres', seconds: 15 },
+        { kind: 'video', video: 'tres', seconds: 14 },
         t('Isso não estava nos meus planos. Mas a imagem continua carregando... ⏳'),
       ],
       replies: [],
@@ -163,7 +163,7 @@ export function checkpoint(index: number, total: number, snape: boolean): Step {
   return {
     hacker: [
       t(`Mais 3 blocos... já são ${index} 😤`),
-      { kind: 'video', video: 'mais', seconds: 15 },
+      { kind: 'video', video: 'mais', seconds: 16 },
       t(`${left === 1 ? 'Falta 1' : `Faltam ${left}`}. Duvido chegarem até o fim.`),
     ],
     replies: [],
