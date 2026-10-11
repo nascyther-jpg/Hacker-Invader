@@ -8,6 +8,7 @@ import { MissionProvider } from '../game/store';
 import { color } from '../theme/tokens';
 import { zap } from '../theme/zap';
 import { fontAssets } from '../theme/type';
+import { ZapBridge } from '../zap/Bridge';
 import { ZapProvider } from '../zap/store';
 
 SplashScreen.preventAutoHideAsync();
@@ -38,6 +39,7 @@ export default function RootLayout() {
             <Stack.Screen name="zap/index" options={{ animation: 'none', contentStyle: { backgroundColor: zap.list } }} />
             <Stack.Screen name="zap/[chat]" options={{ animation: 'slide_from_right', contentStyle: { backgroundColor: zap.bg } }} />
             <Stack.Screen name="zap/invasao" options={{ gestureEnabled: false, animation: 'none' }} />
+            <Stack.Screen name="zap/video/[id]" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
             <Stack.Screen name="setup" options={{ gestureEnabled: false }} />
             <Stack.Screen name="home" options={{ gestureEnabled: false }} />
             <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
@@ -47,6 +49,7 @@ export default function RootLayout() {
             <Stack.Screen name="complete" options={{ gestureEnabled: false }} />
             <Stack.Screen name="hack/[stage]" options={{ gestureEnabled: false, animation: 'none' }} />
           </Stack>
+          <ZapBridge />
         </MissionProvider>
       </ZapProvider>
     </SafeAreaProvider>

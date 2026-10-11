@@ -10,7 +10,9 @@ import { Screen } from '../components/Screen';
 import { Txt } from '../components/Txt';
 import { VoiceRecorder } from '../components/VoiceRecorder';
 import {
+  APELIDO_HACKER,
   MIN_NODES,
+  RECREADOR_NOME,
   PERIODS,
   STORY,
   TEAMS,
@@ -41,6 +43,7 @@ export default function Setup() {
   const [team, setTeam] = useState<Team>(setup.team);
   const [period, setPeriod] = useState<Period>(setup.period);
   const [story, setStory] = useState(setup.story);
+  const [snape, setSnape] = useState(setup.snape);
   const versus = mode === 'versus';
   const max = maxNodesFor(period);
   const route = routeFor(period, total);
@@ -57,7 +60,7 @@ export default function Setup() {
   };
 
   const begin = () => {
-    start({ total, mode, team, period, story });
+    start({ total, mode, team, period, story, snape: story && snape });
     // No roteiro, o hacker invade a tela assim que a missão começa.
     router.replace(story ? { pathname: '/hack/[stage]', params: { stage: 'inicio' } } : '/home');
   };
@@ -134,12 +137,28 @@ export default function Setup() {
 
           <View style={styles.section}>
             <Txt variant="label" tone={color.muted}>
-              3. Crachá do hacker
+              3. Final
             </Txt>
             <Txt variant="body" tone={color.muted}>
-              Leve o QR do crachá do hacker com você. Depois da meta, a pista extra manda as crianças te encontrarem e
-              escanearem o crachá.
+              A cada 3 blocos o hacker manda um vídeo no Zap. No último, ele se revela.
             </Txt>
+            <View style={styles.list} accessibilityRole="radiogroup">
+              <Choice
+                label="Crachá do hacker"
+                description="Leve o QR do crachá com você. Depois da meta, a pista extra manda as crianças te encontrarem e escanearem o crachá."
+                icon="card-account-details-outline"
+                selected={!snape}
+                onPress={() => setSnape(false)}
+              />
+              <Choice
+                label={`${RECREADOR_NOME} joga junto`}
+                description={`Você acompanha as crianças. No fim, o hacker manda no Zap uma charada de Harry Potter e elas descobrem o apelido hacker: ${APELIDO_HACKER}.`}
+                icon="magic-staff"
+                tone="cyan"
+                selected={snape}
+                onPress={() => setSnape(true)}
+              />
+            </View>
           </View>
         </>
       ) : null}

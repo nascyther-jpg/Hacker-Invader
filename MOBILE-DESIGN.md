@@ -23,6 +23,7 @@ src/app/
   zap/index    Zap: lista de conversas (clone de mensageiro). Segurar "Zap" 2 s pula para o BLACK NODE
   zap/[chat]   Conversa. "hacker" = roteiro interativo (src/zap/script.ts); as outras são fachada
   zap/invasao  O link do hacker "instala" o BLACK NODE e abre o boot
+  zap/video/[id] Player em tela cheia dos vídeos do hacker (assets/videos/zap-*.mp4)
   setup        Configuração do recreador: período, modo, time, número de pistas
   home         Carteira + progresso + pista atual
   scan         Scanner (fullScreenModal) -> replace /verify
@@ -36,6 +37,8 @@ src/app/
 ## Zap (antes do BLACK NODE)
 
 O Zap imita de propósito o tema escuro de um mensageiro comum, sem nome nem logo oficiais. Tem tokens próprios em `src/theme/zap.ts` e fonte do sistema; as regras de cor, fonte e chanfro abaixo valem só para o BLACK NODE. A única marca do BLACK NODE dentro do Zap é a prévia do link de convite.
+
+Durante a caça (roteiro do hacker), a cada 3 blocos e no último o hacker manda mensagem com vídeo vertical no Zap (`src/zap/Bridge.tsx`), e uma notificação aparece no topo das telas do BLACK NODE. No final "Snape joga junto", o último vídeo traz a charada do apelido hacker (Príncipe Mestiço) e a resposta certa no Zap desmascara o hacker.
 
 ## Tokens (`src/theme`)
 

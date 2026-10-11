@@ -15,6 +15,7 @@ import { font } from '../theme/type';
 import { zap, zapType } from '../theme/zap';
 import type { Part } from './script';
 import { clock } from './store';
+import { VIDEOS, type VideoId } from './videos';
 
 export function ZText({ style, ...rest }: TextProps) {
   return <Text style={[zapType.body, { color: zap.text }, style]} {...rest} />;
@@ -41,12 +42,13 @@ type BubbleProps = {
   tail: boolean;
   read?: boolean;
   from?: string;
-  onLink?: () => void;
+  onLink?: (to: 'acesso' | 'carteira') => void;
+  onVideo?: (id: VideoId) => void;
 };
 
-export function Bubble({ part, mine, at, tail, read = false, from, onLink }: BubbleProps) {
+export function Bubble({ part, mine, at, tail, read = false, from, onLink, onVideo }: BubbleProps) {
   const bg = mine ? zap.bubbleOut : zap.bubbleIn;
-  const media = part.kind === 'image' || part.kind === 'link';
+  const media = part.kind === 'image' || part.kind === 'link' || part.kind === 'video';
   return (
     <Animated.View
       entering={FadeIn.duration(180)}
@@ -62,7 +64,7 @@ export function Bubble({ part, mine, at, tail, read = false, from, onLink }: Bub
         ]}
       >
         {from ? <Text style={[zapType.small, styles.from]}>{from}</Text> : null}
-        <Content part={part} mine={mine} onLink={onLink} />
+        <Content part={part} mine={mine} onLink={onLink} onVideo={onVideo} />
         <View style={styles.meta}>
           <Text style={[zapType.tiny, { color: mine ? zap.metaMine : zap.muted }]}>{clock(at)}</Text>
           {mine ? <Ticks read={read} /> : null}
@@ -72,7 +74,17 @@ export function Bubble({ part, mine, at, tail, read = false, from, onLink }: Bub
   );
 }
 
-function Content({ part, mine, onLink }: { part: Part; mine: boolean; onLink?: () => void }) {
+function Content({
+  part,
+  mine,
+  onLink,
+  onVideo,
+}: {
+  part: Part;
+  mine: boolean;
+  onLink?: BubbleProps['onLink'];
+  onVideo?: BubbleProps['onVideo'];
+}) {
   switch (part.kind) {
     case 'text':
       // Espaço invisível no fim da última linha para a hora (e os tiques) não cobrirem o texto.
@@ -101,8 +113,10 @@ function Content({ part, mine, onLink }: { part: Part; mine: boolean; onLink?: (
       );
     case 'audio':
       return <AudioNote seconds={part.seconds} />;
+    case 'video':
+      return <VideoThumb id={part.video} seconds={part.seconds} onPress={() => onVideo?.(part.video)} />;
     case 'link':
-      return <InviteLink onPress={onLink} />;
+      return <InviteLink to={part.to} onPress={() => onLink?.(part.to)} />;
   }
 }
 
@@ -177,22 +191,58 @@ function AudioNote({ seconds }: { seconds: number }) {
 const WAVE = [6, 12, 18, 9, 22, 14, 7, 16, 24, 11, 6, 19, 13, 8, 21, 15, 9, 5, 12, 17, 10, 6, 14, 8];
 
 // Link de convite com prévia: a única coisa com a cara do BLACK NODE dentro do Zap.
-function InviteLink({ onPress }: { onPress?: () => void }) {
+const LINKS = {
+  acesso: {
+    icon: 'cube-outline',
+    title: 'BLACK NODE · Acesso ao nó secreto',
+    text: 'Programa instalado neste celular. Só agentes autorizados.',
+  },
+  carteira: {
+    icon: 'lock-open-variant-outline',
+    title: 'BLACK NODE · Carteira desbloqueada',
+    text: 'O hacker foi desmascarado. Os bitcoins voltaram para o resort.',
+  },
+} as const;
+
+function InviteLink({ to, onPress }: { to: 'acesso' | 'carteira'; onPress?: () => void }) {
+  const link = LINKS[to];
   return (
     <Pressable onPress={onPress} accessibilityRole="link" accessibilityLabel="Abrir o BLACK NODE">
       <View style={styles.preview}>
         <View style={styles.previewArt}>
-          <MaterialCommunityIcons name="cube-outline" size={40} color={zap.neon} />
+          <MaterialCommunityIcons name={link.icon} size={40} color={zap.neon} />
           <Text style={styles.previewBrand}>BLACK NODE</Text>
         </View>
         <View style={styles.previewText}>
-          <ZText style={styles.previewTitle}>BLACK NODE · Acesso ao nó secreto</ZText>
+          <ZText style={styles.previewTitle}>{link.title}</ZText>
           <Text style={[zapType.small, { color: zap.muted }]} numberOfLines={2}>
-            Programa instalado neste celular. Só agentes autorizados.
+            {link.text}
           </Text>
         </View>
       </View>
-      <ZText style={styles.link}>blacknode://acesso</ZText>
+      <ZText style={styles.link}>blacknode://{to}</ZText>
+    </Pressable>
+  );
+}
+
+// Vídeo recebido: capa escura com play; abre o player em tela cheia.
+function VideoThumb({ id, seconds, onPress }: { id: VideoId; seconds: number; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`Ver vídeo: ${VIDEOS[id].title}`}>
+      <View style={styles.video}>
+        {SCANLINES.map((top, i) => (
+          <View key={i} style={[styles.scanline, { top: top * 1.6, opacity: 0.06 }]} />
+        ))}
+        <MaterialCommunityIcons name="skull-outline" size={56} color={zap.rec} />
+        <View style={styles.play}>
+          <MaterialCommunityIcons name="play" size={36} color={zap.text} />
+        </View>
+        <View style={styles.videoMeta}>
+          <MaterialCommunityIcons name="video" size={16} color={zap.text} />
+          <Text style={[zapType.tiny, { color: zap.text }]}>0:{String(seconds).padStart(2, '0')}</Text>
+        </View>
+      </View>
+      <View style={styles.videoSpacer} />
     </Pressable>
   );
 }
@@ -266,6 +316,10 @@ const styles = StyleSheet.create({
   previewText: { padding: 8, gap: 2 },
   previewTitle: { fontWeight: '600', fontSize: 15 },
   link: { color: zap.link, textDecorationLine: 'underline', paddingHorizontal: 4, paddingTop: 6, paddingBottom: 16 },
+  video: { height: 300, borderRadius: 6, backgroundColor: zap.camArt, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  play: { position: 'absolute', width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' },
+  videoMeta: { position: 'absolute', left: 8, bottom: 6, flexDirection: 'row', alignItems: 'center', gap: 4 },
+  videoSpacer: { height: 16 },
   typing: { flexDirection: 'row', gap: 4, paddingVertical: 14, paddingHorizontal: 14 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: zap.muted },
   system: { alignSelf: 'center', backgroundColor: zap.system, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginVertical: 8, marginHorizontal: 40 },

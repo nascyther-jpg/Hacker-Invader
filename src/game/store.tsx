@@ -6,7 +6,10 @@ import { HACKER_CODE, STORY, findCode, routeFor, type CodeSet, type Mode, type P
 export type Block = { index: number; at: number };
 
 /** Escolhas do recreador antes de entregar o celular. */
-export type Setup = { total: number; mode: Mode; team: Team; period: Period; /** Roteiro do hacker ligado. */ story: boolean };
+export type Setup = { total: number; mode: Mode; team: Team; period: Period; /** Roteiro do hacker ligado. */ story: boolean;
+  /** Final alternativo: o recreador (Snape) joga junto e o hacker se revela por charada no Zap. */
+  snape: boolean;
+};
 
 type State = {
   setup: Setup;
@@ -30,7 +33,7 @@ type Action =
   | { type: 'reset' };
 
 const initial: State = {
-  setup: { total: STORY.nodes, mode: 'solo', team: 'A', period: 'dia', story: true },
+  setup: { total: STORY.nodes, mode: 'solo', team: 'A', period: 'dia', story: true, snape: false },
   startedAt: null,
   blocks: [],
   decrypted: [],
@@ -75,6 +78,7 @@ type Mission = State & {
   mode: Mode;
   period: Period;
   story: boolean;
+  snape: boolean;
   /** Fim do cronômetro regressivo do roteiro; null fora dele. */
   deadline: number | null;
   /** Roteiro: o hacker já foi desmascarado. */
@@ -105,7 +109,7 @@ const MissionContext = createContext<Mission | null>(null);
 export function MissionProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initial);
 
-  const { total, mode, team, period, story } = state.setup;
+  const { total, mode, team, period, story, snape } = state.setup;
   const route = useMemo(() => routeFor(period, total), [period, total]);
   const codeSet: CodeSet = mode === 'versus' ? team : 'solo';
   const btc = state.blocks.length;
@@ -145,6 +149,7 @@ export function MissionProvider({ children }: { children: ReactNode }) {
       mode,
       period,
       story,
+      snape,
       deadline,
       unmasked,
       route,
@@ -168,6 +173,7 @@ export function MissionProvider({ children }: { children: ReactNode }) {
       mode,
       period,
       story,
+      snape,
       deadline,
       unmasked,
       route,

@@ -226,7 +226,9 @@ export function findCode(raw: string): { set: CodeSet; index: number; code: stri
   return undefined;
 }
 
-export function finalMessage(mode: Mode, story = false): string {
+export function finalMessage(mode: Mode, story = false, snape = false): string {
+  if (story && snape)
+    return `O ${APELIDO_HACKER} era o tio ${RECREADOR_NOME} o tempo todo! Mostre esta tela para ele e receba sua recompensa.`;
   if (story)
     return mode === 'versus'
       ? 'O hacker era o tio o tempo todo! Mostre esta tela para ele: ganha o time que desmascarou o hacker primeiro.'
@@ -310,3 +312,10 @@ export const VOICE_SCRIPT = 'HAHAHA, vocês atingiram a meta... Ei, peraí! Como
 /** Pista extra, depois da meta: leva até o tio, que é o hacker. */
 export const EXTRA_CLUE =
   'A voz não mente. O hacker conhece cada pista que vocês acharam, usa o uniforme do resort e comanda as brincadeiras. Encontrem quem organizou esta caça e escaneiem o crachá dele!';
+
+// ---------- Mensagens do hacker no Zap durante a caça ----------
+
+/** Nome de recreador de quem joga junto no final alternativo. */
+export const RECREADOR_NOME = 'Snape';
+/** Apelido hacker que as crianças descobrem pela charada (Snape = Príncipe Mestiço, de Harry Potter). */
+export const APELIDO_HACKER = 'Príncipe Mestiço';
